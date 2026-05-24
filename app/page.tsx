@@ -349,7 +349,7 @@ export default function Home() {
   const renderProgressPage = () => {
     if (!studentGrade) {
       return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px', textAlign: 'center' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '80px', textAlign: 'center' }}>
           <h2 style={styles.sectionTitle}>اختار سنتك الدراسية أولاً 🎓</h2>
           <p style={{ color: darkMode ? '#94a3b8' : '#64748b', marginBottom: 24 }}>عشان نشوف تقدمك في الفيديوهات الخاصة بسنتك</p>
           
@@ -391,7 +391,7 @@ export default function Home() {
     const stats = calculateStats(studentGrade);
     
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px' }}>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '80px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h2 style={{ ...styles.sectionTitle, margin: 0 }}>تقدمك في {stats.gradeName} 📊</h2>
           <motion.button 
@@ -453,7 +453,7 @@ export default function Home() {
   };
 
   const renderSupportPage = () => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px', textAlign: 'center' }}>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '80px', textAlign: 'center' }}>
       <h2 style={styles.sectionTitle}>تواصل معانا 💬</h2>
       
       <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 24 }}>
@@ -650,29 +650,42 @@ export default function Home() {
         {viewMode === 'branches' && activeTab === 'home' && renderBranches()}
       </AnimatePresence>
 
-      {/* ✅ Bottom Navigation Bar - FIXED (darkMode inline) */}
+      {/* ✅ Bottom Navigation Bar - Icons Only & Smaller */}
       {isAuth && (
         <div style={{
           ...styles.bottomNav,
           background: darkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           borderTop: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
+          padding: '8px 0 12px 0'
         }}>
           <motion.button 
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => { playClickSound(); setActiveTab('home'); setStage('home'); setSelectedLevel(null); setViewMode('branches'); setSelectedBranch(null); }}
-            style={{ ...styles.navButton, background: activeTab === 'home' ? '#2563eb' : 'transparent', color: activeTab === 'home' ? 'white' : (darkMode ? '#94a3b8' : '#64748b') }}
+            style={{ 
+              ...styles.navButton, 
+              background: activeTab === 'home' ? '#2563eb' : 'transparent', 
+              color: activeTab === 'home' ? 'white' : (darkMode ? '#94a3b8' : '#64748b'),
+              width: 50,
+              height: 50,
+              borderRadius: 14
+            }}
           >
-            <span style={{ fontSize: 24 }}>🏠</span>
-            <span style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>الرئيسية</span>
+            <span style={{ fontSize: 22 }}>🏠</span>
           </motion.button>
           
           <motion.button 
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => { playClickSound(); setActiveTab('progress'); }}
-            style={{ ...styles.navButton, background: activeTab === 'progress' ? '#2563eb' : 'transparent', color: activeTab === 'progress' ? 'white' : (darkMode ? '#94a3b8' : '#64748b') }}
+            style={{ 
+              ...styles.navButton, 
+              background: activeTab === 'progress' ? '#2563eb' : 'transparent', 
+              color: activeTab === 'progress' ? 'white' : (darkMode ? '#94a3b8' : '#64748b'),
+              width: 50,
+              height: 50,
+              borderRadius: 14
+            }}
           >
-            <span style={{ fontSize: 24 }}>📊</span>
-            <span style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>تقدمي</span>
+            <span style={{ fontSize: 22 }}>📊</span>
           </motion.button>
           
           <motion.a 
@@ -685,11 +698,13 @@ export default function Home() {
               background: activeTab === 'support' ? '#25D366' : 'transparent', 
               color: activeTab === 'support' ? 'white' : '#25D366',
               textDecoration: 'none',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              width: 50,
+              height: 50,
+              borderRadius: 14
             }}
           >
-            <span style={{ fontSize: 24 }}>💬</span>
-            <span style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>واتساب</span>
+            <span style={{ fontSize: 22 }}>💬</span>
           </motion.a>
         </div>
       )}
@@ -733,7 +748,7 @@ const styles: Record<string, React.CSSProperties> = {
   msg: { color: '#64748b', fontSize: '0.95rem', marginBottom: 18, fontWeight: 600 },
   enterBtn: { marginTop: 10, background: '#facc15', color: '#0f172a', padding: '11px 24px', borderRadius: 16, fontWeight: 800, fontSize: '0.95rem', display: 'inline-block', boxShadow: '0 4px 12px rgba(250, 204, 21, 0.25)' },
   backBtn: { padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' },
-  footer: { textAlign: 'center', padding: 40, color: '#64748b', fontWeight: 700, fontSize: '0.95rem', borderTop: '1px solid rgba(100,116,139,0.08)', paddingBottom: 100 },
+  footer: { textAlign: 'center', padding: '40px 20px 80px 20px', color: '#64748b', fontWeight: 700, fontSize: '0.85rem', borderTop: '1px solid rgba(100,116,139,0.08)' },
   motivationBox: { margin: '10px auto 24px auto', padding: '18px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: 18, textAlign: 'center', fontSize: '1.15rem', fontWeight: 700, maxWidth: 500, boxShadow: '0 10px 25px rgba(16, 185, 129, 0.25)', width: '90%' },
   // ✅ Bottom Nav - Base styles only (no darkMode reference)
   bottomNav: {
@@ -745,25 +760,19 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
-    padding: '6px 0 10px 0',
+    gap: 12,
     zIndex: 1000,
-    boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
+    boxShadow: '0 -2px 15px rgba(0,0,0,0.15)',
     transition: 'background-color 0.3s ease, border-color 0.3s ease'
   },
   navButton: {
-    flex: 1,
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    padding: '8px 0',
     border: 'none',
     background: 'transparent',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    borderRadius: 16,
-    margin: '0 4px',
-    textDecoration: 'none'
+    margin: '0 8px'
   }
 };
