@@ -71,7 +71,7 @@ export default function Home() {
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
   const [viewLoading, setViewLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
-  const [studentGrade, setStudentGrade] = useState<SelectedLevel>(null); // ✅ جديد: سنة الطالب
+  const [studentGrade, setStudentGrade] = useState<SelectedLevel>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isAudioUnlocked = useRef(false);
   const messages = ['🔥 استمر.. أنت أقرب للنجاح مما تتخيل', '💪 كل خطوة بتاخدها بتفرق في مستقبلك', '🚀 النجاح بيبدأ بقرارك النهارده', '📚 كمّل.. أنت بتبني نفسك بنفسك', '✨ المذاكرة دلوقتي = راحة في المستقبل'];
@@ -85,7 +85,6 @@ export default function Home() {
     'secondary-2-الديناميكا': [],
   };
 
-  // ✅ قائمة السنوات الدراسية للعرض
   const prepYears = [{ title: 'الصف الأول الإعدادي', index: 0, icon: '📘', msg: 'ابدأ تأسيسك الصح من هنا 💪' }, { title: 'الصف الثاني الإعدادي', index: 1, icon: '📗', msg: 'خطوة جديدة نحو التفوق 🔥' }, { title: 'الصف الثالث الإعدادي', index: 2, icon: '📕', msg: 'استعد للثانوي بقوة 🚀' }];
   const secondaryYears = [{ title: 'الصف الأول الثانوي', index: 0, icon: '🧪', msg: 'ابدأ رحلة الاحتراف ✨' }, { title: 'الصف الثاني الثانوي', index: 1, icon: '📐', msg: 'أنت قريب من القمة 🔥' }, { title: 'الصف الثالث الثانوي', index: 2, icon: '🎓', msg: 'طريقك للنجاح يبدأ هنا 💥' }];
   
@@ -96,10 +95,9 @@ export default function Home() {
 
   const showToast = (msg: string, type: Exclude<ToastType, null>) => setToast({ msg, type });
 
-  // ✅ Load saved data on mount
   useEffect(() => {
     const link = document.createElement('link');
-    link.href = 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
     
@@ -108,12 +106,12 @@ export default function Home() {
     const savedWatched = localStorage.getItem('watchedVideos');
     const savedProgress = localStorage.getItem('videoProgress');
     const savedDarkMode = localStorage.getItem('darkMode');
-    const savedGrade = localStorage.getItem('studentGrade'); // ✅ سنة الطالب
+    const savedGrade = localStorage.getItem('studentGrade');
     
     if (savedWatched) setWatchedVideos(JSON.parse(savedWatched));
     if (savedProgress) setVideoProgress(JSON.parse(savedProgress));
     if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode));
-    if (savedGrade) setStudentGrade(JSON.parse(savedGrade)); // ✅ تحميل سنة الطالب
+    if (savedGrade) setStudentGrade(JSON.parse(savedGrade));
     if (savedToken) { setIsAuth(true); if (savedName) setUserName(savedName); }
 
     if (typeof window !== 'undefined') {
@@ -133,7 +131,6 @@ export default function Home() {
     }
   }, []);
 
-  // Show motivational message
   useEffect(() => {
     if (isAuth) {
       const randomMsg = messages[Math.floor(Math.random() * messages.length)];
@@ -170,7 +167,6 @@ export default function Home() {
     setTimeout(() => { setViewMode(mode); setViewLoading(false); }, 200);
   };
 
-  // ✅ دالة لحفظ سنة الطالب
   const selectStudentGrade = (grade: SelectedLevel) => {
     setStudentGrade(grade);
     localStorage.setItem('studentGrade', JSON.stringify(grade));
@@ -206,7 +202,7 @@ export default function Home() {
   const logout = () => {
     playClickSound();
     localStorage.removeItem('token'); localStorage.removeItem('userName');
-    localStorage.removeItem('studentGrade'); // ✅ مسح سنة الطالب عند الخروج
+    localStorage.removeItem('studentGrade');
     setIsAuth(false); setCode(''); setStage('home'); setSelectedLevel(null);
     setViewMode('branches'); setSelectedBranch(null); setPlayingVideo(null);
     setUserName(''); setMotivationalMsg(''); setSearchQuery('');
@@ -219,11 +215,9 @@ export default function Home() {
   const filteredPrepYears = useMemo(() => prepYears.filter(y => y.title.includes(searchQuery)), [searchQuery]);
   const filteredSecondaryYears = useMemo(() => secondaryYears.filter(y => y.title.includes(searchQuery)), [searchQuery]);
 
-  // ✅ ✅ ✅ دالة حساب التقدم بناءً على سنة الطالب فقط
   const calculateStats = (grade: SelectedLevel | null) => {
     if (!grade) return { totalVideos: 0, watchedCount: 0, progressPercentage: 0, branchStats: {}, gradeName: '' };
     
-    // جلب فيديوهات السنة الدراسية فقط
     const yearBranches = grade.stage === 'prep' ? branches.prep[grade.index] : branches.secondary[grade.index];
     const gradeVideos: Video[] = [];
     
@@ -238,7 +232,6 @@ export default function Home() {
     const watchedCount = gradeVideos.filter(v => watchedVideos[v.id]).length;
     const progressPercentage = totalVideos > 0 ? Math.round((watchedCount / totalVideos) * 100) : 0;
     
-    // إحصائيات كل فرع في السنة
     const branchStats: Record<string, { watched: number; total: number }> = {};
     yearBranches.forEach(branch => {
       const branchKey = `${grade.stage}-${grade.index}-${branch.name}`;
@@ -250,7 +243,6 @@ export default function Home() {
     });
 
     const gradeName = grade.stage === 'prep' ? prepYears[grade.index].title : secondaryYears[grade.index].title;
-
     return { totalVideos, watchedCount, progressPercentage, branchStats, gradeName };
   };
 
@@ -354,9 +346,7 @@ export default function Home() {
     );
   };
 
-  // ✅ Progress Page Component - Grade-specific
   const renderProgressPage = () => {
-    // لو الطالب ما اختارش سنته، نعرض له اختيار
     if (!studentGrade) {
       return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px', textAlign: 'center' }}>
@@ -398,14 +388,12 @@ export default function Home() {
       );
     }
 
-    // لو اختار سنته، نعرض الإحصائيات
     const stats = calculateStats(studentGrade);
-    const gradeName = studentGrade.stage === 'prep' ? prepYears[studentGrade.index].title : secondaryYears[studentGrade.index].title;
     
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ ...styles.sectionTitle, margin: 0 }}>تقدمك في {gradeName} 📊</h2>
+          <h2 style={{ ...styles.sectionTitle, margin: 0 }}>تقدمك في {stats.gradeName} 📊</h2>
           <motion.button 
             whileHover={{ scale: 1.05 }} 
             whileTap={{ scale: 0.95 }}
@@ -423,7 +411,7 @@ export default function Home() {
           <div style={{ height: 12, background: '#e2e8f0', borderRadius: 6, overflow: 'hidden', marginBottom: 16 }}>
             <div style={{ height: '100%', background: 'linear-gradient(90deg, #10b981, #facc15)', width: `${stats.progressPercentage}%`, borderRadius: 6, transition: 'width 0.5s ease' }} />
           </div>
-          <p style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>خلصت {stats.watchedCount} من {stats.totalVideos} فيديو في {gradeName}</p>
+          <p style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>خلصت {stats.watchedCount} من {stats.totalVideos} فيديو في {stats.gradeName}</p>
         </div>
 
         <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 16 }}>تقدمك في كل فرع</h3>
@@ -448,7 +436,7 @@ export default function Home() {
         ) : (
           <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', padding: 24, textAlign: 'center' }}>
             <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎬</div>
-            <p>لا توجد فيديوهات متاحة في {gradeName} حالياً</p>
+            <p>لا توجد فيديوهات متاحة في {stats.gradeName} حالياً</p>
             <p style={{ fontSize: '0.9rem', color: darkMode ? '#94a3b8' : '#64748b', marginTop: 8 }}>سيتم إضافة محتوى جديد قريباً!</p>
           </div>
         )}
@@ -464,23 +452,53 @@ export default function Home() {
     );
   };
 
-  // Support Page Component
   const renderSupportPage = () => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px', textAlign: 'center' }}>
-      <h2 style={styles.sectionTitle}>الدعم والمساعدة 🛠️</h2>
+      <h2 style={styles.sectionTitle}>تواصل معانا 💬</h2>
       
       <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 24 }}>
-        <div style={{ fontSize: '4rem', marginBottom: 16 }}>📞</div>
-        <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 8 }}>تواصل معانا</h3>
-        <p style={{ color: darkMode ? '#94a3b8' : '#64748b', marginBottom: 16 }}>موجودين لمساعدتك في أي وقت</p>
+        <div style={{ fontSize: '4rem', marginBottom: 16 }}>
+          {/* ✅ WhatsApp Icon */}
+          <span style={{ 
+            display: 'inline-block',
+            width: 80,
+            height: 80,
+            borderRadius: 20,
+            background: '#25D366',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 25px rgba(37, 211, 102, 0.4)'
+          }}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+          </span>
+        </div>
+        <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: 8 }}>دعم فني مباشر</h3>
+        <p style={{ color: darkMode ? '#94a3b8' : '#64748b', marginBottom: 20, fontSize: '1.05rem' }}>فريقنا موجود لمساعدتك في أي وقت</p>
         <motion.a 
           href="https://wa.me/201015134800" 
           target="_blank" 
           rel="noopener noreferrer"
           whileHover={{ scale: 1.05 }}
-          style={{ ...styles.button, display: 'inline-block', width: 'auto', padding: '12px 32px' }}
+          whileTap={{ scale: 0.95 }}
+          style={{ 
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 10,
+            background: '#25D366',
+            color: 'white',
+            padding: '16px 40px',
+            borderRadius: 16,
+            textDecoration: 'none',
+            fontSize: '1.2rem',
+            fontWeight: 800,
+            boxShadow: '0 8px 25px rgba(37, 211, 102, 0.4)',
+            transition: 'all 0.2s ease'
+          }}
         >
-          💬 واتساب
+          💬 تواصل واتساب
         </motion.a>
       </div>
 
@@ -500,6 +518,12 @@ export default function Home() {
       </div>
     </motion.div>
   );
+
+  const getGradeDisplay = () => {
+    if (!studentGrade) return null;
+    const gradeName = studentGrade.stage === 'prep' ? prepYears[studentGrade.index].title : secondaryYears[studentGrade.index].title;
+    return gradeName;
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} style={{ ...styles.app, background: darkMode ? '#0f172a' : '#f8fafc', color: darkMode ? '#f8fafc' : '#0f172a' }}>
@@ -527,21 +551,32 @@ export default function Home() {
         </motion.div>
       )} </AnimatePresence>
 
-      {/* Navbar */}
+      {/* ✅ Navbar Improved */}
       <nav className="nav-container" style={{ ...styles.nav, background: darkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)', borderBottom: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)' }}>
         {isAuth && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, color: darkMode ? '#94a3b8' : '#64748b' }}>أهلاً يا باشمهندس </div>
+            {/* User Info Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <div style={{ ...styles.userName, color: darkMode ? '#facc15' : '#2563eb' }}>{userName || 'جاري التحميل...'}</div>
+              {/* ✅ Grade Display - Better Positioning */}
               {studentGrade && (
-                <div style={{ fontSize: 11, color: '#10b981', fontWeight: 600, marginTop: 2 }}>
-                  📚 {studentGrade.stage === 'prep' ? prepYears[studentGrade.index].title : secondaryYears[studentGrade.index].title}
+                <div style={{ 
+                  fontSize: '0.95rem', 
+                  fontWeight: 700,
+                  color: '#10b981',
+                  background: darkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+                  padding: '4px 14px',
+                  borderRadius: 20,
+                  display: 'inline-block',
+                  width: 'fit-content'
+                }}>
+                  📚 {getGradeDisplay()}
                 </div>
               )}
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+            {/* Controls */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div onClick={() => { playClickSound(); setDarkMode(!darkMode); localStorage.setItem('darkMode', JSON.stringify(!darkMode)); }} style={{ ...styles.themeToggle, background: darkMode ? '#334155' : '#e2e8f0' }}>
                 <span style={{ fontSize: '16px', position: 'absolute', right: '6px' }}>☀️</span>
                 <span style={{ fontSize: '16px', position: 'absolute', left: '6px' }}>🌙</span>
@@ -635,7 +670,7 @@ export default function Home() {
         {viewMode === 'branches' && activeTab === 'home' && renderBranches()}
       </AnimatePresence>
 
-      {/* Bottom Navigation Bar */}
+      {/* ✅ Bottom Navigation Bar - IMPROVED */}
       {isAuth && (
         <div style={styles.bottomNav}>
           <motion.button 
@@ -643,8 +678,8 @@ export default function Home() {
             onClick={() => { playClickSound(); setActiveTab('home'); setStage('home'); setSelectedLevel(null); setViewMode('branches'); setSelectedBranch(null); }}
             style={{ ...styles.navButton, background: activeTab === 'home' ? '#2563eb' : 'transparent', color: activeTab === 'home' ? 'white' : (darkMode ? '#94a3b8' : '#64748b') }}
           >
-            <span style={{ fontSize: 20 }}>🏠</span>
-            <span style={{ fontSize: 10, fontWeight: 700 }}>الرئيسية</span>
+            <span style={{ fontSize: 24 }}>🏠</span>
+            <span style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>الرئيسية</span>
           </motion.button>
           
           <motion.button 
@@ -652,18 +687,30 @@ export default function Home() {
             onClick={() => { playClickSound(); setActiveTab('progress'); }}
             style={{ ...styles.navButton, background: activeTab === 'progress' ? '#2563eb' : 'transparent', color: activeTab === 'progress' ? 'white' : (darkMode ? '#94a3b8' : '#64748b') }}
           >
-            <span style={{ fontSize: 20 }}>📊</span>
-            <span style={{ fontSize: 10, fontWeight: 700 }}>تقدمي</span>
+            <span style={{ fontSize: 24 }}>📊</span>
+            <span style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>تقدمي</span>
           </motion.button>
           
-          <motion.button 
-            whileTap={{ scale: 0.95 }}
-            onClick={() => { playClickSound(); setActiveTab('support'); }}
-            style={{ ...styles.navButton, background: activeTab === 'support' ? '#2563eb' : 'transparent', color: activeTab === 'support' ? 'white' : (darkMode ? '#94a3b8' : '#64748b') }}
+          <motion.a 
+            href="https://wa.me/201015134800" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            onClick={() => playClickSound()}
+            style={{ 
+              ...styles.navButton, 
+              background: activeTab === 'support' ? '#25D366' : 'transparent', 
+              color: activeTab === 'support' ? 'white' : '#25D366',
+              textDecoration: 'none',
+              cursor: 'pointer'
+            }}
           >
-            <span style={{ fontSize: 20 }}>🛠️</span>
-            <span style={{ fontSize: 10, fontWeight: 700 }}>الدعم</span>
-          </motion.button>
+            <span style={{ fontSize: 24 }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>واتساب</span>
+          </motion.a>
         </div>
       )}
 
@@ -682,9 +729,9 @@ const styles: Record<string, React.CSSProperties> = {
   supportBtn: { display: 'block', marginTop: 14, background: '#16a34a', color: 'white', padding: 14, borderRadius: 14, textDecoration: 'none', fontSize: '1.05rem', fontWeight: 700, boxShadow: '0 4px 14px rgba(22, 163, 74, 0.2)', boxSizing: 'border-box' },
   skeletonContainer: { padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' },
   skeletonPulse: { width: 60, height: 60, borderRadius: '50%', background: '#2563eb', boxShadow: '0 0 20px rgba(37, 99, 235, 0.5)' },
-  nav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 24px', position: 'sticky', top: 0, zIndex: 1000, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', transition: 'all 0.4s ease', minHeight: 70 },
-  userName: { fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' },
-  themeToggle: { width: 60, height: 30, borderRadius: 999, position: 'relative', cursor: 'pointer', padding: 4, overflow: 'hidden', transition: 'background-color 0.3s ease', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)' },
+  nav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', position: 'sticky', top: 0, zIndex: 1000, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', transition: 'all 0.4s ease', minHeight: 70 },
+  userName: { fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' },
+  themeToggle: { width: 56, height: 28, borderRadius: 999, position: 'relative', cursor: 'pointer', padding: 4, overflow: 'hidden', transition: 'background-color 0.3s ease', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)' },
   logoutBtn: { background: 'transparent', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 12px', borderRadius: 20, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease' },
   banner: { width: '100%', height: 340, overflow: 'hidden', position: 'relative' },
   sliderWrapper: { position: 'relative', width: '100%', height: '100%' },
@@ -708,18 +755,19 @@ const styles: Record<string, React.CSSProperties> = {
   backBtn: { padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' },
   footer: { textAlign: 'center', padding: 40, color: '#64748b', fontWeight: 700, fontSize: '0.95rem', borderTop: '1px solid rgba(100,116,139,0.08)', paddingBottom: 100 },
   motivationBox: { margin: '10px auto 24px auto', padding: '18px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: 18, textAlign: 'center', fontSize: '1.15rem', fontWeight: 700, maxWidth: 500, boxShadow: '0 10px 25px rgba(16, 185, 129, 0.25)', width: '90%' },
+  // ✅ Bottom Navigation Bar - IMPROVED STYLES
   bottomNav: {
     position: 'fixed',
     bottom: 0,
     left: 0,
     right: 0,
-    background: 'rgba(255, 255, 255, 0.95)',
+    background: darkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
     backdropFilter: 'blur(10px)',
-    borderTop: '1px solid rgba(0,0,0,0.1)',
+    borderTop: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
-    padding: '8px 0',
+    padding: '6px 0 10px 0',
     zIndex: 1000,
     boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
   },
@@ -728,13 +776,15 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    gap: 2,
     padding: '8px 0',
     border: 'none',
     background: 'transparent',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    borderRadius: 12,
-    margin: '0 4px'
+    borderRadius: 16,
+    margin: '0 4px',
+    textDecoration: 'none'
   }
 };
