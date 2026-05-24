@@ -71,6 +71,7 @@ export default function Home() {
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
   const [viewLoading, setViewLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  const [studentGrade, setStudentGrade] = useState<SelectedLevel>(null); // ✅ جديد: سنة الطالب
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isAudioUnlocked = useRef(false);
   const messages = ['🔥 استمر.. أنت أقرب للنجاح مما تتخيل', '💪 كل خطوة بتاخدها بتفرق في مستقبلك', '🚀 النجاح بيبدأ بقرارك النهارده', '📚 كمّل.. أنت بتبني نفسك بنفسك', '✨ المذاكرة دلوقتي = راحة في المستقبل'];
@@ -84,9 +85,18 @@ export default function Home() {
     'secondary-2-الديناميكا': [],
   };
 
+  // ✅ قائمة السنوات الدراسية للعرض
+  const prepYears = [{ title: 'الصف الأول الإعدادي', index: 0, icon: '📘', msg: 'ابدأ تأسيسك الصح من هنا 💪' }, { title: 'الصف الثاني الإعدادي', index: 1, icon: '📗', msg: 'خطوة جديدة نحو التفوق 🔥' }, { title: 'الصف الثالث الإعدادي', index: 2, icon: '📕', msg: 'استعد للثانوي بقوة 🚀' }];
+  const secondaryYears = [{ title: 'الصف الأول الثانوي', index: 0, icon: '🧪', msg: 'ابدأ رحلة الاحتراف ✨' }, { title: 'الصف الثاني الثانوي', index: 1, icon: '📐', msg: 'أنت قريب من القمة 🔥' }, { title: 'الصف الثالث الثانوي', index: 2, icon: '🎓', msg: 'طريقك للنجاح يبدأ هنا 💥' }];
+  
+  const branches = {
+    prep: [[{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة', icon: '📐' }, { name: 'الإحصاء', icon: '📊' }], [{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة', icon: '📐' }, { name: 'الإحصاء', icon: '📊' }], [{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة', icon: '📐' }, { name: 'حساب المثلثات', icon: '📈' }]],
+    secondary: [[{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة', icon: '📐' }, { name: 'حساب المثلثات', icon: '📈' }], [{ name: 'الجبر', icon: '➗' }, { name: 'التفاضل والتكامل', icon: '∫' }, { name: 'حساب المثلثات', icon: '📈' }], [{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة الفراغية', icon: '📦' }, { name: 'التفاضل والتكامل', icon: '∫' }, { name: 'الاستاتيكا', icon: '⚖️' }, { name: 'الديناميكا', icon: '🏎️' }]],
+  };
+
   const showToast = (msg: string, type: Exclude<ToastType, null>) => setToast({ msg, type });
 
-  // Load saved data on mount
+  // ✅ Load saved data on mount
   useEffect(() => {
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap';
@@ -98,10 +108,12 @@ export default function Home() {
     const savedWatched = localStorage.getItem('watchedVideos');
     const savedProgress = localStorage.getItem('videoProgress');
     const savedDarkMode = localStorage.getItem('darkMode');
+    const savedGrade = localStorage.getItem('studentGrade'); // ✅ سنة الطالب
     
     if (savedWatched) setWatchedVideos(JSON.parse(savedWatched));
     if (savedProgress) setVideoProgress(JSON.parse(savedProgress));
     if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode));
+    if (savedGrade) setStudentGrade(JSON.parse(savedGrade)); // ✅ تحميل سنة الطالب
     if (savedToken) { setIsAuth(true); if (savedName) setUserName(savedName); }
 
     if (typeof window !== 'undefined') {
@@ -121,7 +133,7 @@ export default function Home() {
     }
   }, []);
 
-  // Show motivational message on mount and when user logs in
+  // Show motivational message
   useEffect(() => {
     if (isAuth) {
       const randomMsg = messages[Math.floor(Math.random() * messages.length)];
@@ -147,7 +159,6 @@ export default function Home() {
     showToast(updated[videoId] ? '✅ تم تحديد الفيديو كمكتمل' : '↩️ تم إلغاء التحديد', 'info');
   };
 
-  // Save video progress
   const saveVideoProgress = (videoId: string, currentTime: number) => {
     const updated = { ...videoProgress, [videoId]: currentTime };
     setVideoProgress(updated);
@@ -157,6 +168,13 @@ export default function Home() {
   const handleViewChange = (mode: 'branches' | 'videos') => {
     setViewLoading(true);
     setTimeout(() => { setViewMode(mode); setViewLoading(false); }, 200);
+  };
+
+  // ✅ دالة لحفظ سنة الطالب
+  const selectStudentGrade = (grade: SelectedLevel) => {
+    setStudentGrade(grade);
+    localStorage.setItem('studentGrade', JSON.stringify(grade));
+    showToast('✅ تم تحديد سنتك الدراسية', 'success');
   };
 
   const checkCode = async () => {
@@ -188,18 +206,12 @@ export default function Home() {
   const logout = () => {
     playClickSound();
     localStorage.removeItem('token'); localStorage.removeItem('userName');
+    localStorage.removeItem('studentGrade'); // ✅ مسح سنة الطالب عند الخروج
     setIsAuth(false); setCode(''); setStage('home'); setSelectedLevel(null);
     setViewMode('branches'); setSelectedBranch(null); setPlayingVideo(null);
     setUserName(''); setMotivationalMsg(''); setSearchQuery('');
-    setActiveTab('home');
+    setActiveTab('home'); setStudentGrade(null);
     showToast('👋 تم تسجيل الخروج', 'info');
-  };
-
-  const prepYears = [{ title: 'الصف الأول الإعدادي', icon: '📘', msg: 'ابدأ تأسيسك الصح من هنا 💪' }, { title: 'الصف الثاني الإعدادي', icon: '📗', msg: 'خطوة جديدة نحو التفوق 🔥' }, { title: 'الصف الثالث الإعدادي', icon: '📕', msg: 'استعد للثانوي بقوة 🚀' }];
-  const secondaryYears = [{ title: 'الصف الأول الثانوي', icon: '🧪', msg: 'ابدأ رحلة الاحتراف ✨' }, { title: 'الصف الثاني الثانوي', icon: '📐', msg: 'أنت قريب من القمة 🔥' }, { title: 'الصف الثالث الثانوي', icon: '🎓', msg: 'طريقك للنجاح يبدأ هنا 💥' }];
-  const branches = {
-    prep: [[{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة', icon: '📐' }, { name: 'الإحصاء', icon: '📊' }], [{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة', icon: '📐' }, { name: 'الإحصاء', icon: '📊' }], [{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة', icon: '📐' }, { name: 'حساب المثلثات', icon: '📈' }]],
-    secondary: [[{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة', icon: '📐' }, { name: 'حساب المثلثات', icon: '📈' }], [{ name: 'الجبر', icon: '➗' }, { name: 'التفاضل والتكامل', icon: '∫' }, { name: 'حساب المثلثات', icon: '📈' }], [{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة الفراغية', icon: '📦' }, { name: 'التفاضل والتكامل', icon: '∫' }, { name: 'الاستاتيكا', icon: '⚖️' }, { name: 'الديناميكا', icon: '🏎️' }]],
   };
 
   const cardVariants: Variants = { hover: { scale: 1.02, y: -5, boxShadow: '0 20px 40px rgba(0,0,0,0.15)', transition: { type: 'spring', stiffness: 300, damping: 20 } } };
@@ -207,21 +219,39 @@ export default function Home() {
   const filteredPrepYears = useMemo(() => prepYears.filter(y => y.title.includes(searchQuery)), [searchQuery]);
   const filteredSecondaryYears = useMemo(() => secondaryYears.filter(y => y.title.includes(searchQuery)), [searchQuery]);
 
-  // Calculate progress stats
-  const calculateStats = () => {
-    const totalVideos = Object.values(branchVideos).flat().length;
-    const watchedCount = Object.keys(watchedVideos).filter(key => watchedVideos[key]).length;
+  // ✅ ✅ ✅ دالة حساب التقدم بناءً على سنة الطالب فقط
+  const calculateStats = (grade: SelectedLevel | null) => {
+    if (!grade) return { totalVideos: 0, watchedCount: 0, progressPercentage: 0, branchStats: {}, gradeName: '' };
+    
+    // جلب فيديوهات السنة الدراسية فقط
+    const yearBranches = grade.stage === 'prep' ? branches.prep[grade.index] : branches.secondary[grade.index];
+    const gradeVideos: Video[] = [];
+    
+    yearBranches.forEach(branch => {
+      const branchKey = `${grade.stage}-${grade.index}-${branch.name}`;
+      if (branchVideos[branchKey]) {
+        gradeVideos.push(...branchVideos[branchKey]);
+      }
+    });
+    
+    const totalVideos = gradeVideos.length;
+    const watchedCount = gradeVideos.filter(v => watchedVideos[v.id]).length;
     const progressPercentage = totalVideos > 0 ? Math.round((watchedCount / totalVideos) * 100) : 0;
     
+    // إحصائيات كل فرع في السنة
     const branchStats: Record<string, { watched: number; total: number }> = {};
-    Object.entries(branchVideos).forEach(([branch, videos]) => {
+    yearBranches.forEach(branch => {
+      const branchKey = `${grade.stage}-${grade.index}-${branch.name}`;
+      const videos = branchVideos[branchKey] || [];
       if (videos.length > 0) {
         const branchWatched = videos.filter(v => watchedVideos[v.id]).length;
-        branchStats[branch] = { watched: branchWatched, total: videos.length };
+        branchStats[branch.name] = { watched: branchWatched, total: videos.length };
       }
     });
 
-    return { totalVideos, watchedCount, progressPercentage, branchStats };
+    const gradeName = grade.stage === 'prep' ? prepYears[grade.index].title : secondaryYears[grade.index].title;
+
+    return { totalVideos, watchedCount, progressPercentage, branchStats, gradeName };
   };
 
   const renderVideos = () => {
@@ -324,12 +354,67 @@ export default function Home() {
     );
   };
 
-  // ✅ Progress Page Component - Fixed
+  // ✅ Progress Page Component - Grade-specific
   const renderProgressPage = () => {
-    const stats = calculateStats();
+    // لو الطالب ما اختارش سنته، نعرض له اختيار
+    if (!studentGrade) {
+      return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px', textAlign: 'center' }}>
+          <h2 style={styles.sectionTitle}>اختار سنتك الدراسية أولاً 🎓</h2>
+          <p style={{ color: darkMode ? '#94a3b8' : '#64748b', marginBottom: 24 }}>عشان نشوف تقدمك في الفيديوهات الخاصة بسنتك</p>
+          
+          <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 16 }}>المرحلة الإعدادية</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 24 }}>
+            {prepYears.map((year) => (
+              <motion.button
+                key={year.index}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => selectStudentGrade({ stage: 'prep', index: year.index })}
+                style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', padding: 16, cursor: 'pointer', border: '2px solid transparent' }}
+              >
+                <div style={{ fontSize: '2rem', marginBottom: 8 }}>{year.icon}</div>
+                <div style={{ fontWeight: 700 }}>{year.title}</div>
+              </motion.button>
+            ))}
+          </div>
+          
+          <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 16 }}>المرحلة الثانوية</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+            {secondaryYears.map((year) => (
+              <motion.button
+                key={year.index}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => selectStudentGrade({ stage: 'secondary', index: year.index })}
+                style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', padding: 16, cursor: 'pointer', border: '2px solid transparent' }}
+              >
+                <div style={{ fontSize: '2rem', marginBottom: 8 }}>{year.icon}</div>
+                <div style={{ fontWeight: 700 }}>{year.title}</div>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+      );
+    }
+
+    // لو اختار سنته، نعرض الإحصائيات
+    const stats = calculateStats(studentGrade);
+    const gradeName = studentGrade.stage === 'prep' ? prepYears[studentGrade.index].title : secondaryYears[studentGrade.index].title;
+    
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px' }}>
-        <h2 style={styles.sectionTitle}>تقدمك في المنصة 📊</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h2 style={{ ...styles.sectionTitle, margin: 0 }}>تقدمك في {gradeName} 📊</h2>
+          <motion.button 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setStudentGrade(null)}
+            style={{ ...styles.backBtn, padding: '8px 16px', fontSize: '0.9rem' }}
+          >
+            تغيير السنة
+          </motion.button>
+        </div>
         
         <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 24, textAlign: 'center' }}>
           <div style={{ fontSize: '4rem', marginBottom: 16 }}>{stats.progressPercentage === 100 ? '🏆' : stats.progressPercentage >= 50 ? '💪' : '📚'}</div>
@@ -338,31 +423,38 @@ export default function Home() {
           <div style={{ height: 12, background: '#e2e8f0', borderRadius: 6, overflow: 'hidden', marginBottom: 16 }}>
             <div style={{ height: '100%', background: 'linear-gradient(90deg, #10b981, #facc15)', width: `${stats.progressPercentage}%`, borderRadius: 6, transition: 'width 0.5s ease' }} />
           </div>
-          <p style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>خلصت {stats.watchedCount} من {stats.totalVideos} فيديو</p>
+          <p style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>خلصت {stats.watchedCount} من {stats.totalVideos} فيديو في {gradeName}</p>
         </div>
 
         <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 16 }}>تقدمك في كل فرع</h3>
-        {Object.entries(stats.branchStats).map(([branch, data]) => {
-          const percentage = Math.round((data.watched / data.total) * 100);
-          const branchName = branch.split('-').pop();
-          return (
-            <div key={branch} style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 16, padding: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontWeight: 700 }}>{branchName}</span>
-                <span style={{ color: '#10b981', fontWeight: 700 }}>{percentage}%</span>
+        {Object.keys(stats.branchStats).length > 0 ? (
+          Object.entries(stats.branchStats).map(([branchName, data]) => {
+            const percentage = Math.round((data.watched / data.total) * 100);
+            return (
+              <div key={branchName} style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 16, padding: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontWeight: 700 }}>{branchName}</span>
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>{percentage}%</span>
+                </div>
+                <div style={{ height: 8, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', background: percentage === 100 ? '#10b981' : '#3b82f6', width: `${percentage}%`, borderRadius: 4, transition: 'width 0.5s ease' }} />
+                </div>
+                <p style={{ fontSize: '0.85rem', color: darkMode ? '#94a3b8' : '#64748b', marginTop: 8, marginBottom: 0 }}>
+                  {data.watched} من {data.total} فيديو
+                </p>
               </div>
-              <div style={{ height: 8, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: percentage === 100 ? '#10b981' : '#3b82f6', width: `${percentage}%`, borderRadius: 4, transition: 'width 0.5s ease' }} />
-              </div>
-              <p style={{ fontSize: '0.85rem', color: darkMode ? '#94a3b8' : '#64748b', marginTop: 8, marginBottom: 0 }}>
-                {data.watched} من {data.total} فيديو
-              </p>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', padding: 24, textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎬</div>
+            <p>لا توجد فيديوهات متاحة في {gradeName} حالياً</p>
+            <p style={{ fontSize: '0.9rem', color: darkMode ? '#94a3b8' : '#64748b', marginTop: 8 }}>سيتم إضافة محتوى جديد قريباً!</p>
+          </div>
+        )}
 
         <div style={{ ...styles.motivationBox, marginTop: 24 }}>
-          {stats.progressPercentage === 100 ? '🎉 مبروك! خلصت كل الفيديوهات!' : 
+          {stats.progressPercentage === 100 ? '🎉 مبروك! خلصت كل فيديوهات سنتك!' : 
            stats.progressPercentage >= 75 ? '🔥 أنت قربت على النهاية! كمل!' :
            stats.progressPercentage >= 50 ? '💪 نص الطريق.. أنت عظيم!' :
            stats.progressPercentage >= 25 ? '📚 كمل.. أنت في الطريق الصح!' :
@@ -372,7 +464,7 @@ export default function Home() {
     );
   };
 
-  // ✅ Support Page Component - FIXED JSX TAGS
+  // Support Page Component
   const renderSupportPage = () => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px', textAlign: 'center' }}>
       <h2 style={styles.sectionTitle}>الدعم والمساعدة 🛠️</h2>
@@ -442,6 +534,11 @@ export default function Home() {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
               <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, color: darkMode ? '#94a3b8' : '#64748b' }}>أهلاً يا باشمهندس </div>
               <div style={{ ...styles.userName, color: darkMode ? '#facc15' : '#2563eb' }}>{userName || 'جاري التحميل...'}</div>
+              {studentGrade && (
+                <div style={{ fontSize: 11, color: '#10b981', fontWeight: 600, marginTop: 2 }}>
+                  📚 {studentGrade.stage === 'prep' ? prepYears[studentGrade.index].title : secondaryYears[studentGrade.index].title}
+                </div>
+              )}
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
@@ -501,10 +598,14 @@ export default function Home() {
             </div>
             <h2 className="title-xl" style={styles.sectionTitle}>المرحلة الإعدادية</h2>
             <div className="grid-container" style={styles.grid}>
-              {filteredPrepYears.map((year, index) => {
-                const originalIndex = prepYears.findIndex(p => p.title === year.title);
-                return ( <motion.div key={index} variants={cardVariants} whileHover="hover" onClick={() => { playClickSound(); setSelectedLevel({ stage: 'prep', index: originalIndex }); setSearchQuery(''); }} style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', color: darkMode ? '#f8fafc' : '#0f172a', border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0' }}> <div style={styles.icon}>{year.icon}</div> <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '10px 0 5px 0' }}>{year.title}</h3> <p style={styles.msg}>{year.msg}</p> <div style={styles.enterBtn}>عرض الفروع ←</div> </motion.div>);
-              })}
+              {filteredPrepYears.map((year) => (
+                <motion.div key={year.index} variants={cardVariants} whileHover="hover" onClick={() => { playClickSound(); setSelectedLevel({ stage: 'prep', index: year.index }); setSearchQuery(''); }} style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', color: darkMode ? '#f8fafc' : '#0f172a', border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0' }}> 
+                  <div style={styles.icon}>{year.icon}</div> 
+                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '10px 0 5px 0' }}>{year.title}</h3> 
+                  <p style={styles.msg}>{year.msg}</p> 
+                  <div style={styles.enterBtn}>عرض الفروع ←</div> 
+                </motion.div>
+              ))}
             </div>
           </motion.div>
         )}
@@ -516,10 +617,14 @@ export default function Home() {
             </div>
             <h2 className="title-xl" style={styles.sectionTitle}>المرحلة الثانوية</h2>
             <div className="grid-container" style={styles.grid}>
-              {filteredSecondaryYears.map((year, index) => {
-                const originalIndex = secondaryYears.findIndex(s => s.title === year.title);
-                return ( <motion.div key={index} variants={cardVariants} whileHover="hover" onClick={() => { playClickSound(); setSelectedLevel({ stage: 'secondary', index: originalIndex }); setSearchQuery(''); }} style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', color: darkMode ? '#f8fafc' : '#0f172a', border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0' }}> <div style={styles.icon}>{year.icon}</div> <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '10px 0 5px 0' }}>{year.title}</h3> <p style={styles.msg}>{year.msg}</p> <div style={styles.enterBtn}>عرض الفروع ←</div> </motion.div>);
-              })}
+              {filteredSecondaryYears.map((year) => (
+                <motion.div key={year.index} variants={cardVariants} whileHover="hover" onClick={() => { playClickSound(); setSelectedLevel({ stage: 'secondary', index: year.index }); setSearchQuery(''); }} style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', color: darkMode ? '#f8fafc' : '#0f172a', border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0' }}> 
+                  <div style={styles.icon}>{year.icon}</div> 
+                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '10px 0 5px 0' }}>{year.title}</h3> 
+                  <p style={styles.msg}>{year.msg}</p> 
+                  <div style={styles.enterBtn}>عرض الفروع ←</div> 
+                </motion.div>
+              ))}
             </div>
           </motion.div>
         )}
@@ -530,7 +635,7 @@ export default function Home() {
         {viewMode === 'branches' && activeTab === 'home' && renderBranches()}
       </AnimatePresence>
 
-      {/* ✅ Bottom Navigation Bar */}
+      {/* Bottom Navigation Bar */}
       {isAuth && (
         <div style={styles.bottomNav}>
           <motion.button 
@@ -603,7 +708,6 @@ const styles: Record<string, React.CSSProperties> = {
   backBtn: { padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' },
   footer: { textAlign: 'center', padding: 40, color: '#64748b', fontWeight: 700, fontSize: '0.95rem', borderTop: '1px solid rgba(100,116,139,0.08)', paddingBottom: 100 },
   motivationBox: { margin: '10px auto 24px auto', padding: '18px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: 18, textAlign: 'center', fontSize: '1.15rem', fontWeight: 700, maxWidth: 500, boxShadow: '0 10px 25px rgba(16, 185, 129, 0.25)', width: '90%' },
-  // ✅ Bottom Navigation Bar Styles
   bottomNav: {
     position: 'fixed',
     bottom: 0,
