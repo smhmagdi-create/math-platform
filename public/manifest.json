@@ -1,0 +1,17 @@
+{
+  "name": "منصة الباشمهندس سامح مجدي",
+  "short_name": "Eng-Magdi",
+  "description": "هتفهم رياضيات بسهوله امتحانات وواجبات ومسابقات مستمرة",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/slide-1.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
