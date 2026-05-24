@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 
 export default function AdminPage() {
@@ -19,8 +21,8 @@ export default function AdminPage() {
     secondary: [['الجبر', 'الهندسة', 'حساب المثلثات'], ['الجبر', 'التفاضل والتكامل', 'حساب المثلثات'], ['الجبر', 'الهندسة الفراغية', 'التفاضل والتكامل', 'الاستاتيكا', 'الديناميكا']]
   };
 
-  // 🔐 غيّر كلمة المرور دي لأي حاجة تحبها
-  const ADMIN_PASS = 'engmagdi2024';
+  // 🔐 كلمة المرور الجديدة (غيرتها عشان أجبر Vercel يعيد البناء)
+  const ADMIN_PASS = 'engmagdi2025';
 
   const handleLogin = () => {
     if (password === ADMIN_PASS) {
