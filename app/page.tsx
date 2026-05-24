@@ -72,18 +72,13 @@ export default function Home() {
   const [viewLoading, setViewLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [studentGrade, setStudentGrade] = useState<SelectedLevel>(null);
+  
+  // ✅ الفيديوهات هتجي من الشيت دلوقتي
+  const [branchVideos, setBranchVideos] = useState<Record<string, Video[]>>({});
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isAudioUnlocked = useRef(false);
   const messages = ['🔥 استمر.. أنت أقرب للنجاح مما تتخيل', '💪 كل خطوة بتاخدها بتفرق في مستقبلك', '🚀 النجاح بيبدأ بقرارك النهارده', '📚 كمّل.. أنت بتبني نفسك بنفسك', '✨ المذاكرة دلوقتي = راحة في المستقبل'];
-  const branchVideos: Record<string, Video[]> = {
-    'prep-0-الجبر': [{ id: '94RTbe5stok', title: 'الدرس الأول القسمة المطولة', duration: '15:30' }],
-    'prep-0-الهندسة': [], 'prep-0-الإحصاء': [], 'prep-1-الجبر': [], 'prep-1-الهندسة': [], 'prep-1-الإحصاء': [],
-    'prep-2-الجبر': [], 'prep-2-الهندسة': [], 'prep-2-حساب المثلثات': [], 'secondary-0-الجبر': [],
-    'secondary-0-الهندسة': [], 'secondary-0-حساب المثلثات': [], 'secondary-1-الجبر': [],
-    'secondary-1-التفاضل والتكامل': [], 'secondary-1-حساب المثلثات': [], 'secondary-2-الجبر': [],
-    'secondary-2-الهندسة الفراغية': [], 'secondary-2-التفاضل والتكامل': [], 'secondary-2-الاستاتيكا': [],
-    'secondary-2-الديناميكا': [],
-  };
 
   const prepYears = [{ title: 'الصف الأول الإعدادي', index: 0, icon: '📘', msg: 'ابدأ تأسيسك الصح من هنا 💪' }, { title: 'الصف الثاني الإعدادي', index: 1, icon: '📗', msg: 'خطوة جديدة نحو التفوق 🔥' }, { title: 'الصف الثالث الإعدادي', index: 2, icon: '📕', msg: 'استعد للثانوي بقوة 🚀' }];
   const secondaryYears = [{ title: 'الصف الأول الثانوي', index: 0, icon: '🧪', msg: 'ابدأ رحلة الاحتراف ✨' }, { title: 'الصف الثاني الثانوي', index: 1, icon: '📐', msg: 'أنت قريب من القمة 🔥' }, { title: 'الصف الثالث الثانوي', index: 2, icon: '🎓', msg: 'طريقك للنجاح يبدأ هنا 💥' }];
@@ -130,6 +125,31 @@ export default function Home() {
       window.addEventListener('click', unlock); window.addEventListener('touchstart', unlock);
     }
   }, []);
+
+  // ✅ جلب الفيديوهات من الشيت بعد تسجيل الدخول
+  useEffect(() => {
+    if (isAuth) {
+      fetch('https://sheetdb.io/api/v1/w28940080r92q')
+        .then(res => res.json())
+        .then(data => {
+          const grouped: Record<string, Video[]> = {};
+          if (Array.isArray(data)) {
+            data.forEach((item: any) => {
+              if (item.branch_id && item.video_id) {
+                if (!grouped[item.branch_id]) grouped[item.branch_id] = [];
+                grouped[item.branch_id].push({
+                  id: item.video_id,
+                  title: item.title || 'فيديو بدون عنوان',
+                  duration: item.duration || '00:00'
+                });
+              }
+            });
+          }
+          setBranchVideos(grouped);
+        })
+        .catch(err => console.error('Error loading videos:', err));
+    }
+  }, [isAuth]);
 
   useEffect(() => {
     if (isAuth) {
@@ -750,7 +770,6 @@ const styles: Record<string, React.CSSProperties> = {
   backBtn: { padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' },
   footer: { textAlign: 'center', padding: '40px 20px 80px 20px', color: '#64748b', fontWeight: 700, fontSize: '0.85rem', borderTop: '1px solid rgba(100,116,139,0.08)' },
   motivationBox: { margin: '10px auto 24px auto', padding: '18px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: 18, textAlign: 'center', fontSize: '1.15rem', fontWeight: 700, maxWidth: 500, boxShadow: '0 10px 25px rgba(16, 185, 129, 0.25)', width: '90%' },
-  // ✅ Bottom Nav - Base styles only (no darkMode reference)
   bottomNav: {
     position: 'fixed',
     bottom: 0,
