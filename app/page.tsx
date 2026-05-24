@@ -213,7 +213,6 @@ export default function Home() {
     const watchedCount = Object.keys(watchedVideos).filter(key => watchedVideos[key]).length;
     const progressPercentage = totalVideos > 0 ? Math.round((watchedCount / totalVideos) * 100) : 0;
     
-    // Count by branch
     const branchStats: Record<string, { watched: number; total: number }> = {};
     Object.entries(branchVideos).forEach(([branch, videos]) => {
       if (videos.length > 0) {
@@ -269,14 +268,6 @@ export default function Home() {
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                       allowFullScreen 
                       style={{ position: 'absolute', top: 0, left: 0, borderRadius: 16 }}
-                      onMessage={(e) => {
-                        // Save progress when video is playing
-                        if (e.data && typeof e.data.currentTime === 'number') {
-                          const duration = 900; // 15 minutes average
-                          const percent = (e.data.currentTime / duration) * 100;
-                          saveVideoProgress(video.id, percent);
-                        }
-                      }}
                     />
                   </div>
                 )}
@@ -333,14 +324,13 @@ export default function Home() {
     );
   };
 
-  // Progress Page Component
+  // ✅ Progress Page Component - Fixed
   const renderProgressPage = () => {
     const stats = calculateStats();
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px' }}>
         <h2 style={styles.sectionTitle}>تقدمك في المنصة 📊</h2>
         
-        {/* Overall Progress */}
         <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 24, textAlign: 'center' }}>
           <div style={{ fontSize: '4rem', marginBottom: 16 }}>{stats.progressPercentage === 100 ? '🏆' : stats.progressPercentage >= 50 ? '💪' : '📚'}</div>
           <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: 8 }}>نسبة إنجازك</h3>
@@ -351,7 +341,6 @@ export default function Home() {
           <p style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>خلصت {stats.watchedCount} من {stats.totalVideos} فيديو</p>
         </div>
 
-        {/* Branch Stats */}
         <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 16 }}>تقدمك في كل فرع</h3>
         {Object.entries(stats.branchStats).map(([branch, data]) => {
           const percentage = Math.round((data.watched / data.total) * 100);
@@ -372,7 +361,6 @@ export default function Home() {
           );
         })}
 
-        {/* Motivational Message */}
         <div style={{ ...styles.motivationBox, marginTop: 24 }}>
           {stats.progressPercentage === 100 ? '🎉 مبروك! خلصت كل الفيديوهات!' : 
            stats.progressPercentage >= 75 ? '🔥 أنت قربت على النهاية! كمل!' :
@@ -384,14 +372,14 @@ export default function Home() {
     );
   };
 
-  // Support Page Component
+  // ✅ Support Page Component - FIXED JSX TAGS
   const renderSupportPage = () => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px', textAlign: 'center' }}>
       <h2 style={styles.sectionTitle}>الدعم والمساعدة 🛠️</h2>
       
       <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 24 }}>
         <div style={{ fontSize: '4rem', marginBottom: 16 }}>📞</div>
-        <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 8 }}>تواصل معانا</div>
+        <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 8 }}>تواصل معانا</h3>
         <p style={{ color: darkMode ? '#94a3b8' : '#64748b', marginBottom: 16 }}>موجودين لمساعدتك في أي وقت</p>
         <motion.a 
           href="https://wa.me/201015134800" 
@@ -542,7 +530,7 @@ export default function Home() {
         {viewMode === 'branches' && activeTab === 'home' && renderBranches()}
       </AnimatePresence>
 
-      {/* Bottom Navigation Bar */}
+      {/* ✅ Bottom Navigation Bar */}
       {isAuth && (
         <div style={styles.bottomNav}>
           <motion.button 
@@ -615,7 +603,7 @@ const styles: Record<string, React.CSSProperties> = {
   backBtn: { padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' },
   footer: { textAlign: 'center', padding: 40, color: '#64748b', fontWeight: 700, fontSize: '0.95rem', borderTop: '1px solid rgba(100,116,139,0.08)', paddingBottom: 100 },
   motivationBox: { margin: '10px auto 24px auto', padding: '18px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: 18, textAlign: 'center', fontSize: '1.15rem', fontWeight: 700, maxWidth: 500, boxShadow: '0 10px 25px rgba(16, 185, 129, 0.25)', width: '90%' },
-  // ✅ Bottom Navigation Bar
+  // ✅ Bottom Navigation Bar Styles
   bottomNav: {
     position: 'fixed',
     bottom: 0,
