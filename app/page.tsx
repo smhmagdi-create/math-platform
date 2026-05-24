@@ -7,6 +7,7 @@ type Stage = 'home' | 'prep' | 'secondary';
 type SelectedLevel = { stage: 'prep' | 'secondary'; index: number } | null;
 type Video = { id: string; title: string; duration: string };
 type ToastType = 'success' | 'error' | 'info' | null;
+type ActiveTab = 'home' | 'progress' | 'support';
 
 // ==================== COMPONENTS ====================
 function AnimatedCounter({ value, title, icon }: { value: number; title: string; icon: string }) {
@@ -67,7 +68,9 @@ export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: Exclude<ToastType, null> } | null>(null);
   const [watchedVideos, setWatchedVideos] = useState<Record<string, boolean>>({});
+  const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
   const [viewLoading, setViewLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isAudioUnlocked = useRef(false);
   const messages = ['🔥 استمر.. أنت أقرب للنجاح مما تتخيل', '💪 كل خطوة بتاخدها بتفرق في مستقبلك', '🚀 النجاح بيبدأ بقرارك النهارده', '📚 كمّل.. أنت بتبني نفسك بنفسك', '✨ المذاكرة دلوقتي = راحة في المستقبل'];
@@ -83,18 +86,29 @@ export default function Home() {
 
   const showToast = (msg: string, type: Exclude<ToastType, null>) => setToast({ msg, type });
 
+  // Load saved data on mount
   useEffect(() => {
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
+    
     const savedToken = localStorage.getItem('token');
     const savedName = localStorage.getItem('userName');
     const savedWatched = localStorage.getItem('watchedVideos');
+    const savedProgress = localStorage.getItem('videoProgress');
+    const savedDarkMode = localStorage.getItem('darkMode');
+    
     if (savedWatched) setWatchedVideos(JSON.parse(savedWatched));
+    if (savedProgress) setVideoProgress(JSON.parse(savedProgress));
+    if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode));
     if (savedToken) { setIsAuth(true); if (savedName) setUserName(savedName); }
 
     if (typeof window !== 'undefined') {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches && !savedDarkMode) {
+        setDarkMode(true);
+      }
+      
       const audio = new Audio('/click.mp3');
       audio.volume = 0.4; audio.preload = 'auto'; audio.load();
       audioRef.current = audio;
@@ -106,6 +120,16 @@ export default function Home() {
       window.addEventListener('click', unlock); window.addEventListener('touchstart', unlock);
     }
   }, []);
+
+  // Show motivational message on mount and when user logs in
+  useEffect(() => {
+    if (isAuth) {
+      const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+      setMotivationalMsg(randomMsg);
+      const timer = setTimeout(() => setMotivationalMsg(''), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuth]);
 
   useEffect(() => { if (images.length === 0) return; const interval = setInterval(() => setCurrentImg((prev) => (prev + 1) % images.length), 4000); return () => clearInterval(interval); }, [images]);
   
@@ -121,6 +145,13 @@ export default function Home() {
     setWatchedVideos(updated);
     localStorage.setItem('watchedVideos', JSON.stringify(updated));
     showToast(updated[videoId] ? '✅ تم تحديد الفيديو كمكتمل' : '↩️ تم إلغاء التحديد', 'info');
+  };
+
+  // Save video progress
+  const saveVideoProgress = (videoId: string, currentTime: number) => {
+    const updated = { ...videoProgress, [videoId]: currentTime };
+    setVideoProgress(updated);
+    localStorage.setItem('videoProgress', JSON.stringify(updated));
   };
 
   const handleViewChange = (mode: 'branches' | 'videos') => {
@@ -160,6 +191,7 @@ export default function Home() {
     setIsAuth(false); setCode(''); setStage('home'); setSelectedLevel(null);
     setViewMode('branches'); setSelectedBranch(null); setPlayingVideo(null);
     setUserName(''); setMotivationalMsg(''); setSearchQuery('');
+    setActiveTab('home');
     showToast('👋 تم تسجيل الخروج', 'info');
   };
 
@@ -170,10 +202,28 @@ export default function Home() {
     secondary: [[{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة', icon: '📐' }, { name: 'حساب المثلثات', icon: '📈' }], [{ name: 'الجبر', icon: '➗' }, { name: 'التفاضل والتكامل', icon: '∫' }, { name: 'حساب المثلثات', icon: '📈' }], [{ name: 'الجبر', icon: '➗' }, { name: 'الهندسة الفراغية', icon: '📦' }, { name: 'التفاضل والتكامل', icon: '∫' }, { name: 'الاستاتيكا', icon: '⚖️' }, { name: 'الديناميكا', icon: '🏎️' }]],
   };
 
-  const cardVariants: Variants = { hover: { scale: 1.04, y: -10, boxShadow: '0 25px 40px rgba(0,0,0,0.2)', transition: { type: 'spring', stiffness: 300, damping: 18 } } };
-  const buttonVariants: Variants = { hover: { scale: 1.04, boxShadow: '0 8px 20px rgba(37, 99, 235, 0.3)' }, tap: { scale: 0.98 } };
+  const cardVariants: Variants = { hover: { scale: 1.02, y: -5, boxShadow: '0 20px 40px rgba(0,0,0,0.15)', transition: { type: 'spring', stiffness: 300, damping: 20 } } };
+  const buttonVariants: Variants = { hover: { scale: 1.05, boxShadow: '0 5px 15px rgba(37, 99, 235, 0.4)' }, tap: { scale: 0.98 } };
   const filteredPrepYears = useMemo(() => prepYears.filter(y => y.title.includes(searchQuery)), [searchQuery]);
   const filteredSecondaryYears = useMemo(() => secondaryYears.filter(y => y.title.includes(searchQuery)), [searchQuery]);
+
+  // Calculate progress stats
+  const calculateStats = () => {
+    const totalVideos = Object.values(branchVideos).flat().length;
+    const watchedCount = Object.keys(watchedVideos).filter(key => watchedVideos[key]).length;
+    const progressPercentage = totalVideos > 0 ? Math.round((watchedCount / totalVideos) * 100) : 0;
+    
+    // Count by branch
+    const branchStats: Record<string, { watched: number; total: number }> = {};
+    Object.entries(branchVideos).forEach(([branch, videos]) => {
+      if (videos.length > 0) {
+        const branchWatched = videos.filter(v => watchedVideos[v.id]).length;
+        branchStats[branch] = { watched: branchWatched, total: videos.length };
+      }
+    });
+
+    return { totalVideos, watchedCount, progressPercentage, branchStats };
+  };
 
   const renderVideos = () => {
     if (!selectedBranch || viewMode !== 'videos') return null;
@@ -191,23 +241,47 @@ export default function Home() {
           </div>
         ) : videos.length > 0 ? (
           <div style={{ display: 'grid', gap: 24, maxWidth: 900, margin: '0 auto', padding: '0 24px 40px 24px' }}>
-            {videos.map((video) => (
-              <motion.div key={video.id} variants={cardVariants} whileHover="hover" style={{ background: darkMode ? '#1e293b' : 'white', borderRadius: 20, overflow: 'hidden', boxShadow: darkMode ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(0,0,0,0.1)', border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0' }}>
+            {videos.map((video) => {
+              const progress = videoProgress[video.id] || 0;
+              return (
+              <motion.div key={video.id} variants={cardVariants} whileHover="hover" style={{ background: darkMode ? '#1e293b' : 'white', borderRadius: 20, overflow: 'hidden', boxShadow: darkMode ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(0,0,0,0.05)', border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0' }}>
                 {!playingVideo || playingVideo.id !== video.id ? (
                   <div onClick={() => { playClickSound(); setPlayingVideo(video); }} style={{ position: 'relative', cursor: 'pointer' }}>
                     <img src={`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`} alt={video.title} style={{ width: '100%', display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.id}/mqdefault.jpg`; }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(250, 204, 21, 0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', transition: 'transform 0.2s' }}>▶</div>
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 70, height: 70, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, color: '#ef4444', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', transition: 'transform 0.2s' }}>▶</div>
                     </div>
+                    {progress > 0 && (
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: 'rgba(0,0,0,0.5)' }}>
+                        <div style={{ width: `${(progress / 100) * 100}%`, height: '100%', background: '#10b981' }} />
+                      </div>
+                    )}
                     <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(0,0,0,0.8)', color: 'white', padding: '4px 10px', borderRadius: 6, fontSize: '0.85rem', fontWeight: 700 }}>{video.duration}</div>
                   </div>
                 ) : (
                   <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
-                    <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1`} title={video.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: 'absolute', top: 0, left: 0, borderRadius: 16 }} />
+                    <iframe 
+                      width="100%" 
+                      height="100%" 
+                      src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1&start=${Math.floor(progress * 900 / 100)}`} 
+                      title={video.title} 
+                      frameBorder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen 
+                      style={{ position: 'absolute', top: 0, left: 0, borderRadius: 16 }}
+                      onMessage={(e) => {
+                        // Save progress when video is playing
+                        if (e.data && typeof e.data.currentTime === 'number') {
+                          const duration = 900; // 15 minutes average
+                          const percent = (e.data.currentTime / duration) * 100;
+                          saveVideoProgress(video.id, percent);
+                        }
+                      }}
+                    />
                   </div>
                 )}
                 <div style={{ padding: '20px', textAlign: 'center' }}>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 8px 0', color: darkMode ? '#f8fafc' : '#0f172a' }}>{video.title}</h3>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 8px 0', color: darkMode ? '#f8fafc' : '#0f172a' }}>{video.title}</h3>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 10 }}>
                     {watchedVideos[video.id] && <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 700 }}>✅ تمت المشاهدة</span>}
                     <motion.button whileHover={{ scale: 1.05 }} onClick={() => toggleWatched(video.id)} style={{ background: watchedVideos[video.id] ? '#334155' : '#10b981', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{watchedVideos[video.id] ? 'إلغاء التحديد' : 'تحديد كمكتمل'}</motion.button>
@@ -215,7 +289,7 @@ export default function Home() {
                   </div>
                 </div>
               </motion.div>
-            ))}
+            )})}
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '60px 20px', opacity: 0.7 }}>
@@ -246,7 +320,7 @@ export default function Home() {
             const watchedCount = branchVideos[branchKey]?.filter(v => watchedVideos[v.id]).length || 0;
             const totalVideos = branchVideos[branchKey]?.length || 0;
             return (
-              <motion.div key={i} variants={cardVariants} whileHover="hover" onClick={() => { playClickSound(); setSelectedBranch(branchKey); handleViewChange('videos'); }} style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', color: darkMode ? '#f8fafc' : '#0f172a', border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0', boxShadow: darkMode ? '0 10px 25px rgba(0,0,0,0.3), 0 0 1px rgba(250,204,21,0.1)' : '0 10px 25px rgba(0,0,0,0.03)', cursor: 'pointer' }}>
+              <motion.div key={i} variants={cardVariants} whileHover="hover" onClick={() => { playClickSound(); setSelectedBranch(branchKey); handleViewChange('videos'); }} style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', color: darkMode ? '#f8fafc' : '#0f172a', border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0', boxShadow: darkMode ? '0 10px 25px rgba(0,0,0,0.2), 0 0 1px rgba(250,204,21,0.1)' : '0 10px 25px rgba(0,0,0,0.05)', cursor: 'pointer' }}>
                 <div style={styles.icon}>{b.icon}</div>
                 <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: 12, margin: 0 }}>{b.name}</h3>
                 {totalVideos > 0 && <div style={{ height: 6, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}> <div style={{ height: '100%', background: '#10b981', width: `${(watchedCount / totalVideos) * 100}%`, borderRadius: 4, transition: 'width 0.3s' }} /> </div>}
@@ -259,10 +333,97 @@ export default function Home() {
     );
   };
 
+  // Progress Page Component
+  const renderProgressPage = () => {
+    const stats = calculateStats();
+    return (
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px' }}>
+        <h2 style={styles.sectionTitle}>تقدمك في المنصة 📊</h2>
+        
+        {/* Overall Progress */}
+        <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 24, textAlign: 'center' }}>
+          <div style={{ fontSize: '4rem', marginBottom: 16 }}>{stats.progressPercentage === 100 ? '🏆' : stats.progressPercentage >= 50 ? '💪' : '📚'}</div>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: 8 }}>نسبة إنجازك</h3>
+          <div style={{ fontSize: '3rem', fontWeight: 800, color: '#facc15', marginBottom: 16 }}>{stats.progressPercentage}%</div>
+          <div style={{ height: 12, background: '#e2e8f0', borderRadius: 6, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{ height: '100%', background: 'linear-gradient(90deg, #10b981, #facc15)', width: `${stats.progressPercentage}%`, borderRadius: 6, transition: 'width 0.5s ease' }} />
+          </div>
+          <p style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>خلصت {stats.watchedCount} من {stats.totalVideos} فيديو</p>
+        </div>
+
+        {/* Branch Stats */}
+        <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 16 }}>تقدمك في كل فرع</h3>
+        {Object.entries(stats.branchStats).map(([branch, data]) => {
+          const percentage = Math.round((data.watched / data.total) * 100);
+          const branchName = branch.split('-').pop();
+          return (
+            <div key={branch} style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 16, padding: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontWeight: 700 }}>{branchName}</span>
+                <span style={{ color: '#10b981', fontWeight: 700 }}>{percentage}%</span>
+              </div>
+              <div style={{ height: 8, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: percentage === 100 ? '#10b981' : '#3b82f6', width: `${percentage}%`, borderRadius: 4, transition: 'width 0.5s ease' }} />
+              </div>
+              <p style={{ fontSize: '0.85rem', color: darkMode ? '#94a3b8' : '#64748b', marginTop: 8, marginBottom: 0 }}>
+                {data.watched} من {data.total} فيديو
+              </p>
+            </div>
+          );
+        })}
+
+        {/* Motivational Message */}
+        <div style={{ ...styles.motivationBox, marginTop: 24 }}>
+          {stats.progressPercentage === 100 ? '🎉 مبروك! خلصت كل الفيديوهات!' : 
+           stats.progressPercentage >= 75 ? '🔥 أنت قربت على النهاية! كمل!' :
+           stats.progressPercentage >= 50 ? '💪 نص الطريق.. أنت عظيم!' :
+           stats.progressPercentage >= 25 ? '📚 كمل.. أنت في الطريق الصح!' :
+           '🚀 ابدأ رحلتك النهارده!'}
+        </div>
+      </motion.div>
+    );
+  };
+
+  // Support Page Component
+  const renderSupportPage = () => (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px', paddingBottom: '100px', textAlign: 'center' }}>
+      <h2 style={styles.sectionTitle}>الدعم والمساعدة 🛠️</h2>
+      
+      <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 24 }}>
+        <div style={{ fontSize: '4rem', marginBottom: 16 }}>📞</div>
+        <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 8 }}>تواصل معانا</div>
+        <p style={{ color: darkMode ? '#94a3b8' : '#64748b', marginBottom: 16 }}>موجودين لمساعدتك في أي وقت</p>
+        <motion.a 
+          href="https://wa.me/201015134800" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.05 }}
+          style={{ ...styles.button, display: 'inline-block', width: 'auto', padding: '12px 32px' }}
+        >
+          💬 واتساب
+        </motion.a>
+      </div>
+
+      <div style={{ ...styles.card, background: darkMode ? '#1e293b' : 'white', marginBottom: 24 }}>
+        <div style={{ fontSize: '4rem', marginBottom: 16 }}>❓</div>
+        <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 8 }}>الأسئلة الشائعة</h3>
+        <div style={{ textAlign: 'right', marginTop: 16 }}>
+          <details style={{ marginBottom: 12, padding: 12, background: darkMode ? '#0f172a' : '#f8fafc', borderRadius: 8 }}>
+            <summary style={{ fontWeight: 700, cursor: 'pointer' }}>إزاي أستخدم المنصة؟</summary>
+            <p style={{ marginTop: 8, color: darkMode ? '#94a3b8' : '#64748b' }}>ادخل الكود اللي معاك، اختار مرحلتك، وابدأ تشوف الفيديوهات!</p>
+          </details>
+          <details style={{ marginBottom: 12, padding: 12, background: darkMode ? '#0f172a' : '#f8fafc', borderRadius: 8 }}>
+            <summary style={{ fontWeight: 700, cursor: 'pointer' }}>الفيديوهات بتتسجل؟</summary>
+            <p style={{ marginTop: 8, color: darkMode ? '#94a3b8' : '#64748b' }}>أيوة! المنصة بتسجل آخر مكان وقف عنده كل فيديو.</p>
+          </details>
+        </div>
+      </div>
+    </motion.div>
+  );
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} style={{ ...styles.app, background: darkMode ? '#0f172a' : '#f8fafc', color: darkMode ? '#f8fafc' : '#0f172a' }}>
-      {/* Responsive CSS Injection */}
-      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } } @media (max-width: 768px) { .banner { height: 200px !important; } .grid-container { grid-template-columns: 1fr !important; gap: 16px !important; padding: 12px !important; } .nav-container { padding: 12px 16px !important; } .title-xl { font-size: 24px !important; } .controls-row { flex-direction: column-reverse !important; gap: 10px !important; } }`}</style>
+      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } } @media (max-width: 768px) { .banner { height: 200px !important; } .grid-container { grid-template-columns: 1fr !important; gap: 16px !important; padding: 12px !important; } .nav-container { padding: 10px 16px !important; } .title-xl { font-size: 24px !important; } .controls-row { flex-direction: column-reverse !important; gap: 10px !important; } }`}</style>
       <AnimatePresence>{toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />} </AnimatePresence>
       {darkMode && <div style={{ position: 'fixed', top: -150, left: '50%', transform: 'translateX(-50%)', width: 600, height: 300, background: 'rgba(250, 204, 21, 0.06)', filter: 'blur(150px)', pointerEvents: 'none', zIndex: 0 }} />}
       
@@ -286,19 +447,28 @@ export default function Home() {
         </motion.div>
       )} </AnimatePresence>
 
+      {/* Navbar */}
       <nav className="nav-container" style={{ ...styles.nav, background: darkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)', borderBottom: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)' }}>
         {isAuth && (
-          <div style={styles.userBox}>
-            <div style={styles.userWelcome}>👋 أهلاً يا باشمهندس</div>
-            <div style={{ ...styles.userName, color: darkMode ? '#facc15' : '#2563eb' }}>{userName || 'جاري التحميل...'}</div>
-            <motion.button variants={buttonVariants} whileHover={{ scale: 1.05, background: '#dc2626' }} whileTap="tap" onClick={logout} style={styles.logoutBtn}>تسجيل خروج</motion.button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, color: darkMode ? '#94a3b8' : '#64748b' }}>أهلاً يا باشمهندس </div>
+              <div style={{ ...styles.userName, color: darkMode ? '#facc15' : '#2563eb' }}>{userName || 'جاري التحميل...'}</div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+              <div onClick={() => { playClickSound(); setDarkMode(!darkMode); localStorage.setItem('darkMode', JSON.stringify(!darkMode)); }} style={{ ...styles.themeToggle, background: darkMode ? '#334155' : '#e2e8f0' }}>
+                <span style={{ fontSize: '16px', position: 'absolute', right: '6px' }}>☀️</span>
+                <span style={{ fontSize: '16px', position: 'absolute', left: '6px' }}>🌙</span>
+                <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }} style={{ width: 22, height: 22, borderRadius: '50%', background: darkMode ? '#facc15' : '#ffffff', position: 'absolute', left: darkMode ? '4px' : '34px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+              </div>
+
+              <motion.button variants={buttonVariants} whileHover={{ scale: 1.05, background: '#ef4444', color: 'white' }} whileTap="tap" onClick={logout} style={styles.logoutBtn}>
+                <span style={{ fontSize: 14 }}>🚪</span> خروج
+              </motion.button>
+            </div>
           </div>
         )}
-        <div onClick={() => { playClickSound(); setDarkMode(!darkMode); }} style={{ ...styles.themeToggle, background: darkMode ? '#2563eb' : '#e2e8f0', display: 'flex', justifyContent: darkMode ? 'flex-end' : 'flex-start', alignItems: 'center' }}>
-          <span style={{ position: 'absolute', right: 8, fontSize: 12, display: darkMode ? 'none' : 'block' }}>☀️</span>
-          <span style={{ position: 'absolute', left: 8, fontSize: 12, display: darkMode ? 'block' : 'none' }}>🌙</span>
-          <motion.div layout transition={{ type: 'spring', stiffness: 400, damping: 25 }} style={{ width: 24, height: 24, borderRadius: '50%', background: '#ffffff', zIndex: 2, boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} />
-        </div>
       </nav>
 
       <header className="banner" style={styles.banner}>
@@ -312,12 +482,18 @@ export default function Home() {
         {images.map((_, index) => <div key={index} onClick={() => { playClickSound(); setCurrentImg(index); }} style={{ ...styles.dot, width: currentImg === index ? 24 : 8, background: currentImg === index ? (darkMode ? '#facc15' : '#2563eb') : (darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)') }} />)}
       </div>
 
-      <AnimatePresence>{isAuth && motivationalMsg && <motion.div initial={{ scale: 0.9, opacity: 0, y: -10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: -10 }} style={styles.motivationBox}>{motivationalMsg}</motion.div>} </AnimatePresence>
+      <AnimatePresence>
+        {isAuth && motivationalMsg && (
+          <motion.div initial={{ scale: 0.9, opacity: 0, y: -10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: -10 }} style={styles.motivationBox}>
+            {motivationalMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {isAuth && stage === 'home' && <div style={styles.statsHorizontalBar}> <AnimatedCounter value={7500} title="طلاب مستمر" icon="🧑‍🎓" /> <AnimatedCounter value={350} title="ساعة تأسيس" icon="⏳" /> <AnimatedCounter value={120} title="إمتحان شامل" icon="📝" /> </div>}
+      {isAuth && stage === 'home' && activeTab === 'home' && <div style={styles.statsHorizontalBar}> <AnimatedCounter value={7500} title="طلاب مستمر" icon="🧑‍🎓" /> <AnimatedCounter value={350} title="ساعة تأسيس" icon="⏳" /> <AnimatedCounter value={120} title="إمتحان شامل" icon="📝" /> </div>}
 
       <AnimatePresence mode="wait">
-        {stage === 'home' && (
+        {activeTab === 'home' && stage === 'home' && (
           <motion.div key="home" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }} className="grid-container" style={styles.stageContainer}>
             <motion.div variants={cardVariants} whileHover="hover" style={{ ...styles.bigCard, background: darkMode ? '#1e293b' : 'white', color: darkMode ? '#f8fafc' : '#0f172a', border: darkMode ? '2px solid #2563eb' : '1px solid #e2e8f0', boxShadow: darkMode ? '0 15px 35px rgba(0,0,0,0.3)' : '0 15px 35px rgba(0,0,0,0.03)' }} onClick={() => { playClickSound(); setStage('prep'); }}>
               <div style={styles.bigIcon}>🏫</div> <h2 className="title-xl" style={{ fontSize: '1.5rem', fontWeight: 800, margin: '15px 0' }}>المرحلة الإعدادية</h2> <div style={styles.enterBtn}>دخول وجدول الحصص ←</div>
@@ -327,7 +503,9 @@ export default function Home() {
             </motion.div>
           </motion.div>
         )}
-        {stage === 'prep' && !selectedLevel && (
+        {activeTab === 'progress' && renderProgressPage()}
+        {activeTab === 'support' && renderSupportPage()}
+        {activeTab === 'home' && stage === 'prep' && !selectedLevel && (
           <motion.div key="prep" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
             <div className="controls-row" style={styles.controlsRow}>
               <motion.button variants={buttonVariants} whileHover="hover" whileTap="tap" style={styles.backBtn} onClick={() => { playClickSound(); setStage('home'); setSearchQuery(''); }}>⬅ رجوع للرئيسية</motion.button>
@@ -342,7 +520,7 @@ export default function Home() {
             </div>
           </motion.div>
         )}
-        {stage === 'secondary' && !selectedLevel && (
+        {activeTab === 'home' && stage === 'secondary' && !selectedLevel && (
           <motion.div key="secondary" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
             <div className="controls-row" style={styles.controlsRow}>
               <motion.button variants={buttonVariants} whileHover="hover" whileTap="tap" style={styles.backBtn} onClick={() => { playClickSound(); setStage('home'); setSearchQuery(''); }}>⬅ رجوع للرئيسية</motion.button>
@@ -360,9 +538,41 @@ export default function Home() {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {viewMode === 'videos' && selectedBranch && renderVideos()}
-        {viewMode === 'branches' && renderBranches()}
+        {viewMode === 'videos' && selectedBranch && activeTab === 'home' && renderVideos()}
+        {viewMode === 'branches' && activeTab === 'home' && renderBranches()}
       </AnimatePresence>
+
+      {/* Bottom Navigation Bar */}
+      {isAuth && (
+        <div style={styles.bottomNav}>
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            onClick={() => { playClickSound(); setActiveTab('home'); setStage('home'); setSelectedLevel(null); setViewMode('branches'); setSelectedBranch(null); }}
+            style={{ ...styles.navButton, background: activeTab === 'home' ? '#2563eb' : 'transparent', color: activeTab === 'home' ? 'white' : (darkMode ? '#94a3b8' : '#64748b') }}
+          >
+            <span style={{ fontSize: 20 }}>🏠</span>
+            <span style={{ fontSize: 10, fontWeight: 700 }}>الرئيسية</span>
+          </motion.button>
+          
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            onClick={() => { playClickSound(); setActiveTab('progress'); }}
+            style={{ ...styles.navButton, background: activeTab === 'progress' ? '#2563eb' : 'transparent', color: activeTab === 'progress' ? 'white' : (darkMode ? '#94a3b8' : '#64748b') }}
+          >
+            <span style={{ fontSize: 20 }}>📊</span>
+            <span style={{ fontSize: 10, fontWeight: 700 }}>تقدمي</span>
+          </motion.button>
+          
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            onClick={() => { playClickSound(); setActiveTab('support'); }}
+            style={{ ...styles.navButton, background: activeTab === 'support' ? '#2563eb' : 'transparent', color: activeTab === 'support' ? 'white' : (darkMode ? '#94a3b8' : '#64748b') }}
+          >
+            <span style={{ fontSize: 20 }}>🛠️</span>
+            <span style={{ fontSize: 10, fontWeight: 700 }}>الدعم</span>
+          </motion.button>
+        </div>
+      )}
 
       <footer style={styles.footer}>كل الحقوق محفوظة © eng samehmagdi {new Date().getFullYear()}</footer>
     </motion.div>
@@ -379,12 +589,10 @@ const styles: Record<string, React.CSSProperties> = {
   supportBtn: { display: 'block', marginTop: 14, background: '#16a34a', color: 'white', padding: 14, borderRadius: 14, textDecoration: 'none', fontSize: '1.05rem', fontWeight: 700, boxShadow: '0 4px 14px rgba(22, 163, 74, 0.2)', boxSizing: 'border-box' },
   skeletonContainer: { padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' },
   skeletonPulse: { width: 60, height: 60, borderRadius: '50%', background: '#2563eb', boxShadow: '0 0 20px rgba(37, 99, 235, 0.5)' },
-  nav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', position: 'sticky', top: 0, zIndex: 1000, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', transition: 'all 0.4s ease' },
-  userBox: { display: 'flex', flexDirection: 'column', gap: 2 },
-  userWelcome: { fontSize: 13, fontWeight: 600, opacity: 0.7 },
-  userName: { fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em' },
-  themeToggle: { width: 68, height: 36, borderRadius: 999, position: 'relative', cursor: 'pointer', padding: 6, overflow: 'hidden', transition: 'background-color 0.3s ease', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' },
-  logoutBtn: { background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', marginTop: 4, width: 'fit-content', boxShadow: '0 3px 8px rgba(239, 68, 68, 0.2)' },
+  nav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 24px', position: 'sticky', top: 0, zIndex: 1000, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', transition: 'all 0.4s ease', minHeight: 70 },
+  userName: { fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' },
+  themeToggle: { width: 60, height: 30, borderRadius: 999, position: 'relative', cursor: 'pointer', padding: 4, overflow: 'hidden', transition: 'background-color 0.3s ease', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)' },
+  logoutBtn: { background: 'transparent', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 12px', borderRadius: 20, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease' },
   banner: { width: '100%', height: 340, overflow: 'hidden', position: 'relative' },
   sliderWrapper: { position: 'relative', width: '100%', height: '100%' },
   bannerImg: { position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 1s ease-in-out' },
@@ -405,6 +613,36 @@ const styles: Record<string, React.CSSProperties> = {
   msg: { color: '#64748b', fontSize: '0.95rem', marginBottom: 18, fontWeight: 600 },
   enterBtn: { marginTop: 10, background: '#facc15', color: '#0f172a', padding: '11px 24px', borderRadius: 16, fontWeight: 800, fontSize: '0.95rem', display: 'inline-block', boxShadow: '0 4px 12px rgba(250, 204, 21, 0.25)' },
   backBtn: { padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' },
-  footer: { textAlign: 'center', padding: 40, color: '#64748b', fontWeight: 700, fontSize: '0.95rem', borderTop: '1px solid rgba(100,116,139,0.08)' },
+  footer: { textAlign: 'center', padding: 40, color: '#64748b', fontWeight: 700, fontSize: '0.95rem', borderTop: '1px solid rgba(100,116,139,0.08)', paddingBottom: 100 },
   motivationBox: { margin: '10px auto 24px auto', padding: '18px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: 18, textAlign: 'center', fontSize: '1.15rem', fontWeight: 700, maxWidth: 500, boxShadow: '0 10px 25px rgba(16, 185, 129, 0.25)', width: '90%' },
+  // ✅ Bottom Navigation Bar
+  bottomNav: {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(10px)',
+    borderTop: '1px solid rgba(0,0,0,0.1)',
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    padding: '8px 0',
+    zIndex: 1000,
+    boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
+  },
+  navButton: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    padding: '8px 0',
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    borderRadius: 12,
+    margin: '0 4px'
+  }
 };
