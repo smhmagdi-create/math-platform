@@ -1,7 +1,7 @@
 {
   "name": "منصة الباشمهندس سامح مجدي",
   "short_name": "Eng-Magdi",
-  "description": "هتفهم رياضيات بسهوله امتحانات وواجبات ومسابقات مستمرة",
+  "description": "المنصة التعليمية الأولى في تأسيس وتجميع الرياضيات للثانوية العامة والإعدادية",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -10,8 +10,18 @@
   "icons": [
     {
       "src": "/slide-1.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/slide-1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "ar-EG",
+  "dir": "rtl"
 }
