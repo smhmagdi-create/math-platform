@@ -23,11 +23,9 @@ export default function ManagePage() {
     secondary: [['الجبر', 'الهندسة', 'حساب المثلثات'], ['الجبر', 'التفاضل والتكامل', 'حساب المثلثات'], ['الجبر', 'الهندسة الفراغية', 'التفاضل والتكامل', 'الاستاتيكا', 'الديناميكا']]
   };
 
-  // ✅ دالة تحميل الفيديوهات - هتتأكد إنها تجبر البيانات تتحمل
   const loadVideos = async () => {
     setIsLoadingVideos(true);
     try {
-      // نضيف timestamp عشان نتجنب الكاش
       const url = `${GOOGLE_SCRIPT_URL}?t=${Date.now()}`;
       const response = await fetch(url, {
         method: 'GET',
@@ -51,7 +49,6 @@ export default function ManagePage() {
     }
   };
 
-  // تحميل الفيديوهات أول ما الصفحة تفتح
   useEffect(() => {
     if (isAuth) {
       loadVideos();
@@ -82,7 +79,6 @@ export default function ManagePage() {
     };
 
     try {
-      // نستخدم no-cors عشان نتجنب مشاكل CORS
       await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -90,11 +86,9 @@ export default function ManagePage() {
         body: JSON.stringify(newVideo)
       });
       
-      // نضيف الفيديو للقائمة فوراً
       setVideos([newVideo, ...videos]);
       setMsg('✅ تم الحفظ في Google Sheets بنجاح!');
       
-      // نعيد تحميل الفيديوهات من الـ Sheet بعد ثانية
       setTimeout(() => {
         loadVideos();
       }, 1500);
@@ -151,7 +145,6 @@ export default function ManagePage() {
           </button>
         </div>
         
-        {/* Form الإضافة */}
         <form onSubmit={handleSave} style={{ background: 'white', padding: 24, borderRadius: 20, marginBottom: 24 }}>
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', marginBottom: 8 }}>المرحلة</label>
@@ -209,7 +202,6 @@ export default function ManagePage() {
           {msg && <div style={{ marginTop: 16, padding: 12, borderRadius: 10, background: msg.includes('✅') ? '#f0fdf4' : '#fef2f2', color: msg.includes('✅') ? '#16a34a' : '#dc2626', textAlign: 'center' }}>{msg}</div>}
         </form>
 
-        {/* عرض الفيديوهات */}
         <div style={{ background: 'white', padding: 24, borderRadius: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>الفيديوهات المحفوظة ({videos.length})</h3>
