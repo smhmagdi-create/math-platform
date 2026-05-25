@@ -125,9 +125,10 @@ export default function Home() {
     }
   }, []);
 
+  // ✅ تم التعديل هنا: استبدال sheetdb بـ Google Apps Script
   useEffect(() => {
     if (isAuth) {
-      fetch('https://sheetdb.io/api/v1/w28940080r92q/videos')
+      fetch('https://script.google.com/macros/s/AKfycbxJQOWbtufjDTEmwwc55B4cz_SkMLU4gD48QL770YgJmhDeuht1fLJp8qt4eINACE7M/exec?t=' + Date.now())
         .then(res => res.json())
         .then(data => {
           const grouped: Record<string, Video[]> = {};
