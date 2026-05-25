@@ -30,7 +30,6 @@ export default function AdminPage() {
     const branchId = `${stage}-${grade}-${subject}`;
     const rowData = { branch_id: branchId, video_id: videoId, title, duration };
     try {
-      // ✅ التعديل: الرابط من غير /videos والـ body عبارة عن مصفوفة مباشرة
       const res = await fetch('https://sheetdb.io/api/v1/w28940080r92q', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,7 +46,7 @@ export default function AdminPage() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: 'white', fontFamily: 'Cairo, sans-serif', direction: 'rtl' }}>
         <div style={{ background: '#1e293b', padding: 40, borderRadius: 20, width: '90%', maxWidth: 400, textAlign: 'center' }}>
-          <h2 style={{ marginBottom: 20 }}>🔐 لوحة التحكم</h2>
+          <h2 style={{ marginBottom: 20 }}> لوحة التحكم</h2>
           <input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLogin()} style={{ width: '100%', padding: 14, borderRadius: 12, border: '1px solid #334155', background: '#0f172a', color: 'white', marginBottom: 16 }} />
           <button onClick={handleLogin} style={{ width: '100%', padding: 14, borderRadius: 12, background: '#2563eb', color: 'white', border: 'none' }}>دخول</button>
           {msg.text && <p style={{ marginTop: 12, color: msg.type === 'error' ? '#ef4444' : '#10b981' }}>{msg.text}</p>}
