@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 
 // ✅ رابط Google Apps Script الجديد
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_hWdhEW3a2vs7YM5wJ6QJDIBYZFTVa1a7d4-YKDxCMawhFdndL6kEW-CjjPe-aNek/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxJQOWbtufjDTEmwwc55B4cz_SkMLU4gD48QL770YgJmhDeuht1fLJp8qt4eINACE7M/exec';
 
 export default function ControlPage() {
   const [isAuth, setIsAuth] = useState(false);
