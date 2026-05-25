@@ -1,4 +1,3 @@
-// انسخ من هنا...
 'use client';
 export const dynamic = 'force-dynamic';
 import { useState } from 'react';
@@ -31,13 +30,16 @@ export default function AdminPage() {
     const branchId = `${stage}-${grade}-${subject}`;
     const rowData = { branch_id: branchId, video_id: videoId, title, duration };
     try {
-      const res = await fetch('https://sheetdb.io/api/v1/w28940080r92q/videos', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: rowData })
+      // ✅ التعديل: الرابط من غير /videos والـ body عبارة عن مصفوفة مباشرة
+      const res = await fetch('https://sheetdb.io/api/v1/w28940080r92q', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([rowData])
       });
       const responseText = await res.text();
       if (res.ok) { setMsg({ type: 'success', text: '✅ تم حفظ الفيديو بنجاح!' }); setVideoId(''); setTitle(''); setDuration(''); } 
-      else { setMsg({ type: 'error', text: `❌ خطأ: ${responseText}` }); }
-    } catch (error) { setMsg({ type: 'error', text: '❌ فشل الاتصال' }); } 
+      else { console.error('SheetDB Error:', responseText); setMsg({ type: 'error', text: `❌ خطأ: ${res.status}` }); }
+    } catch (error) { console.error('Network Error:', error); setMsg({ type: 'error', text: '❌ فشل الاتصال' }); } 
     finally { setLoading(false); }
   };
 
@@ -99,4 +101,3 @@ export default function AdminPage() {
     </div>
   );
 }
-// ...إلى هنا
