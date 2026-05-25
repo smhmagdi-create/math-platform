@@ -1,6 +1,6 @@
 'use client';
 export const dynamic = 'force-dynamic';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function AdminPage() {
   const [isAuth, setIsAuth] = useState(false);
@@ -13,6 +13,7 @@ export default function AdminPage() {
   const [videoId, setVideoId] = useState('');
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('');
+  const [savedVideos, setSavedVideos] = useState<any[]>([]);
 
   const subjects: Record<string, string[][]> = {
     prep: [['الجبر', 'الهندسة', 'الإحصاء'], ['الجبر', 'الهندسة', 'الإحصاء'], ['الجبر', 'الهندسة', 'حساب المثلثات']],
@@ -20,33 +21,54 @@ export default function AdminPage() {
   };
   const ADMIN_PASS = 'engmagdi2025';
 
+  // تحميل الفيديوهات المحفوظة محلياً عند فتح الصفحة
+  useEffect(() => {
+    const videos = localStorage.getItem('admin_videos');
+    if (videos) setSavedVideos(JSON.parse(videos));
+  }, []);
+
   const handleLogin = () => {
     if (password === ADMIN_PASS) { setIsAuth(true); setMsg({ type: 'success', text: '✅ تم الدخول بنجاح' }); } 
     else { setMsg({ type: 'error', text: '❌ كلمة المرور غير صحيحة' }); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true); setMsg({ type: '', text: '' });
+    e.preventDefault(); 
+    setLoading(true); 
+    setMsg({ type: '', text: '' });
+    
     const branchId = `${stage}-${grade}-${subject}`;
-    const rowData = { branch_id: branchId, video_id: videoId, title, duration };
+    const newVideo = { 
+      id: Date.now().toString(),
+      branch_id: branchId, 
+      video_id: videoId, 
+      title, 
+      duration,
+      savedAt: new Date().toISOString()
+    };
+
     try {
-      const res = await fetch('https://sheetdb.io/api/v1/w28940080r92q', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify([rowData])
-      });
-      const responseText = await res.text();
-      if (res.ok) { setMsg({ type: 'success', text: '✅ تم حفظ الفيديو بنجاح!' }); setVideoId(''); setTitle(''); setDuration(''); } 
-      else { console.error('SheetDB Error:', responseText); setMsg({ type: 'error', text: `❌ خطأ: ${res.status}` }); }
-    } catch (error) { console.error('Network Error:', error); setMsg({ type: 'error', text: '❌ فشل الاتصال' }); } 
-    finally { setLoading(false); }
+      // ✅ الحفظ في localStorage (شغال 100% بدون سيرفر)
+      const existing = JSON.parse(localStorage.getItem('admin_videos') || '[]');
+      const updated = [newVideo, ...existing];
+      localStorage.setItem('admin_videos', JSON.stringify(updated));
+      setSavedVideos(updated);
+      
+      setMsg({ type: 'success', text: '✅ تم حفظ الفيديو بنجاح!' });
+      setVideoId(''); setTitle(''); setDuration('');
+    } catch (error) {
+      console.error('Error:', error);
+      setMsg({ type: 'error', text: '❌ فشل الحفظ' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isAuth) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: 'white', fontFamily: 'Cairo, sans-serif', direction: 'rtl' }}>
         <div style={{ background: '#1e293b', padding: 40, borderRadius: 20, width: '90%', maxWidth: 400, textAlign: 'center' }}>
-          <h2 style={{ marginBottom: 20 }}> لوحة التحكم</h2>
+          <h2 style={{ marginBottom: 20 }}>🔐 لوحة التحكم</h2>
           <input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLogin()} style={{ width: '100%', padding: 14, borderRadius: 12, border: '1px solid #334155', background: '#0f172a', color: 'white', marginBottom: 16 }} />
           <button onClick={handleLogin} style={{ width: '100%', padding: 14, borderRadius: 12, background: '#2563eb', color: 'white', border: 'none' }}>دخول</button>
           {msg.text && <p style={{ marginTop: 12, color: msg.type === 'error' ? '#ef4444' : '#10b981' }}>{msg.text}</p>}
@@ -57,9 +79,10 @@ export default function AdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a', fontFamily: 'Cairo, sans-serif', direction: 'rtl', padding: '20px 20px 100px 20px' }}>
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
-        <h1 style={{ textAlign: 'center', marginBottom: 30 }}>🎬 إضافة فيديو</h1>
-        <form onSubmit={handleSubmit} style={{ background: 'white', padding: 24, borderRadius: 20 }}>
+      <div style={{ maxWidth: 800, margin: '0 auto' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: 30 }}>🎬 إضافة فيديو جديد</h1>
+        
+        <form onSubmit={handleSubmit} style={{ background: 'white', padding: 24, borderRadius: 20, marginBottom: 30 }}>
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', marginBottom: 8 }}>المرحلة</label>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -92,10 +115,27 @@ export default function AdminPage() {
             <input type="text" placeholder="15:30" value={duration} onChange={(e) => setDuration(e.target.value)} style={{ width: '100%', padding: 12, borderRadius: 10 }} />
           </div>
           <button type="submit" disabled={loading} style={{ width: '100%', padding: 16, borderRadius: 12, background: loading ? '#94a3b8' : '#10b981', color: 'white', border: 'none' }}>
-            {loading ? 'جاري الحفظ...' : '💾 حفظ'}
+            {loading ? 'جاري الحفظ...' : '💾 حفظ الفيديو'}
           </button>
           {msg.text && <div style={{ marginTop: 16, padding: 12, borderRadius: 10, background: msg.type === 'error' ? '#fef2f2' : '#f0fdf4', color: msg.type === 'error' ? '#dc2626' : '#16a34a', textAlign: 'center' }}>{msg.text}</div>}
         </form>
+
+        {/* ✅ عرض الفيديوهات المحفوظة محلياً */}
+        {savedVideos.length > 0 && (
+          <div style={{ background: 'white', padding: 24, borderRadius: 20 }}>
+            <h3 style={{ marginBottom: 16 }}>📋 الفيديوهات المحفوظة ({savedVideos.length})</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {savedVideos.map((v) => (
+                <div key={v.id} style={{ padding: 12, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                  <strong>{v.title}</strong>
+                  <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: 4 }}>
+                    {v.branch_id} | ID: {v.video_id} {v.duration && `| ${v.duration}`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
