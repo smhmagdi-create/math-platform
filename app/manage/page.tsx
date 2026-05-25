@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ManagePage() {
   const [isAuth, setIsAuth] = useState(false);
@@ -7,8 +7,8 @@ export default function ManagePage() {
   const [msg, setMsg] = useState('');
   const [videos, setVideos] = useState<any[]>([]);
 
-  // تحميل الفيديوهات المحفوظة
-  useState(() => {
+  // ✅ الصحيح: نستخدم useEffect عشان نقرأ من localStorage
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('my_videos');
       if (saved) setVideos(JSON.parse(saved));
@@ -50,7 +50,7 @@ export default function ManagePage() {
 
   return (
     <div style={{ padding: 50, background: '#f8fafc', minHeight: '100vh' }}>
-      <h1> إدارة الفيديوهات</h1>
+      <h1>🎬 إدارة الفيديوهات</h1>
       <button onClick={handleSave} style={{ padding: 15, background: 'green', color: 'white', border: 'none', fontSize: 18 }}>
         💾 احفظ فيديو تجريبي
       </button>
