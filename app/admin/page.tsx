@@ -1,5 +1,4 @@
 'use client';
-export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 
 export default function AdminPage() {
@@ -21,55 +20,66 @@ export default function AdminPage() {
   };
   const ADMIN_PASS = 'engmagdi2025';
 
-  // تحميل الفيديوهات المحفوظة محلياً عند فتح الصفحة
+  // تحميل الفيديوهات المحفوظة عند فتح الصفحة
   useEffect(() => {
-    const videos = localStorage.getItem('admin_videos');
-    if (videos) setSavedVideos(JSON.parse(videos));
+    if (typeof window !== 'undefined') {
+      const videos = localStorage.getItem('admin_videos');
+      if (videos) setSavedVideos(JSON.parse(videos));
+    }
   }, []);
 
   const handleLogin = () => {
-    if (password === ADMIN_PASS) { setIsAuth(true); setMsg({ type: 'success', text: '✅ تم الدخول بنجاح' }); } 
-    else { setMsg({ type: 'error', text: '❌ كلمة المرور غير صحيحة' }); }
+    if (password === ADMIN_PASS) {
+      setIsAuth(true);
+      setMsg({ type: 'success', text: '✅ تم الدخول بنجاح' });
+    } else {
+      setMsg({ type: 'error', text: '❌ كلمة المرور غير صحيحة' });
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); 
-    setLoading(true); 
+  // ✅ دالة الحفظ - مش بتتصل بأي سيرفر خالص
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
     setMsg({ type: '', text: '' });
-    
+
     const branchId = `${stage}-${grade}-${subject}`;
-    const newVideo = { 
+    const newVideo = {
       id: Date.now().toString(),
-      branch_id: branchId, 
-      video_id: videoId, 
-      title, 
+      branch_id: branchId,
+      video_id: videoId,
+      title,
       duration,
       savedAt: new Date().toISOString()
     };
 
-    try {
-      // ✅ الحفظ في localStorage (شغال 100% بدون سيرفر)
-      const existing = JSON.parse(localStorage.getItem('admin_videos') || '[]');
-      const updated = [newVideo, ...existing];
-      localStorage.setItem('admin_videos', JSON.stringify(updated));
-      setSavedVideos(updated);
-      
-      setMsg({ type: 'success', text: '✅ تم حفظ الفيديو بنجاح!' });
-      setVideoId(''); setTitle(''); setDuration('');
-    } catch (error) {
-      console.error('Error:', error);
-      setMsg({ type: 'error', text: '❌ فشل الحفظ' });
-    } finally {
-      setLoading(false);
-    }
+    // الحفظ في متصفحك أنت بس
+    const existing = JSON.parse(localStorage.getItem('admin_videos') || '[]');
+    const updated = [newVideo, ...existing];
+    localStorage.setItem('admin_videos', JSON.stringify(updated));
+    setSavedVideos(updated);
+
+    setMsg({ type: 'success', text: '✅ تم حفظ الفيديو بنجاح (محلياً)!' });
+    setVideoId('');
+    setTitle('');
+    setDuration('');
+    setLoading(false);
   };
 
+  // صفحة الدخول
   if (!isAuth) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: 'white', fontFamily: 'Cairo, sans-serif', direction: 'rtl' }}>
         <div style={{ background: '#1e293b', padding: 40, borderRadius: 20, width: '90%', maxWidth: 400, textAlign: 'center' }}>
           <h2 style={{ marginBottom: 20 }}>🔐 لوحة التحكم</h2>
-          <input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLogin()} style={{ width: '100%', padding: 14, borderRadius: 12, border: '1px solid #334155', background: '#0f172a', color: 'white', marginBottom: 16 }} />
+          <input
+            type="password"
+            placeholder="كلمة المرور"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            style={{ width: '100%', padding: 14, borderRadius: 12, border: '1px solid #334155', background: '#0f172a', color: 'white', marginBottom: 16 }}
+          />
           <button onClick={handleLogin} style={{ width: '100%', padding: 14, borderRadius: 12, background: '#2563eb', color: 'white', border: 'none' }}>دخول</button>
           {msg.text && <p style={{ marginTop: 12, color: msg.type === 'error' ? '#ef4444' : '#10b981' }}>{msg.text}</p>}
         </div>
@@ -77,11 +87,12 @@ export default function AdminPage() {
     );
   }
 
+  // صفحة إضافة الفيديو
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a', fontFamily: 'Cairo, sans-serif', direction: 'rtl', padding: '20px 20px 100px 20px' }}>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         <h1 style={{ textAlign: 'center', marginBottom: 30 }}>🎬 إضافة فيديو جديد</h1>
-        
+
         <form onSubmit={handleSubmit} style={{ background: 'white', padding: 24, borderRadius: 20, marginBottom: 30 }}>
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', marginBottom: 8 }}>المرحلة</label>
@@ -120,7 +131,7 @@ export default function AdminPage() {
           {msg.text && <div style={{ marginTop: 16, padding: 12, borderRadius: 10, background: msg.type === 'error' ? '#fef2f2' : '#f0fdf4', color: msg.type === 'error' ? '#dc2626' : '#16a34a', textAlign: 'center' }}>{msg.text}</div>}
         </form>
 
-        {/* ✅ عرض الفيديوهات المحفوظة محلياً */}
+        {/* عرض الفيديوهات المحفوظة */}
         {savedVideos.length > 0 && (
           <div style={{ background: 'white', padding: 24, borderRadius: 20 }}>
             <h3 style={{ marginBottom: 16 }}>📋 الفيديوهات المحفوظة ({savedVideos.length})</h3>
