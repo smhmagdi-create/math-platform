@@ -41,7 +41,7 @@ export default function AdminPage() {
     const rowData = { branch_id: branchId, video_id: videoId, title, duration };
 
     try {
-      const res = await fetch('https://sheetdb.io/api/v1/w28940080r92q', {
+      const res = await fetch('https://sheetdb.io/api/v1/w28940080r92q/videos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: rowData })

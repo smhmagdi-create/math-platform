@@ -73,7 +73,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [studentGrade, setStudentGrade] = useState<SelectedLevel>(null);
   
-  // ✅ الفيديوهات هتجي من الشيت دلوقتي
   const [branchVideos, setBranchVideos] = useState<Record<string, Video[]>>({});
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -126,10 +125,9 @@ export default function Home() {
     }
   }, []);
 
-  // ✅ جلب الفيديوهات من الشيت بعد تسجيل الدخول
   useEffect(() => {
     if (isAuth) {
-      fetch('https://sheetdb.io/api/v1/w28940080r92q')
+      fetch('https://sheetdb.io/api/v1/w28940080r92q/videos')
         .then(res => res.json())
         .then(data => {
           const grouped: Record<string, Video[]> = {};
