@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-// ✅ رابط Google Apps Script بتاعك
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxD4TKJxRdjuP9cTaFH18l4dQ5H2bmVCo3lu_JjPVAyEnZqorF9tX7hC-DoKh2fBG04/exec';
 
 export default function ManagePage() {
@@ -10,8 +9,8 @@ export default function ManagePage() {
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [videos, setVideos] = useState<any[]>([]);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(true);
   
-  // Form fields
   const [stage, setStage] = useState('prep');
   const [grade, setGrade] = useState(0);
   const [subject, setSubject] = useState('الجبر');
@@ -24,21 +23,40 @@ export default function ManagePage() {
     secondary: [['الجبر', 'الهندسة', 'حساب المثلثات'], ['الجبر', 'التفاضل والتكامل', 'حساب المثلثات'], ['الجبر', 'الهندسة الفراغية', 'التفاضل والتكامل', 'الاستاتيكا', 'الديناميكا']]
   };
 
-  // تحميل الفيديوهات من Google Sheets
-  useEffect(() => {
-    loadVideos();
-  }, []);
-
+  // ✅ دالة تحميل الفيديوهات - هتتأكد إنها تجبر البيانات تتحمل
   const loadVideos = async () => {
+    setIsLoadingVideos(true);
     try {
-      const res = await fetch(GOOGLE_SCRIPT_URL);
-      const data = await res.json();
-      setVideos(data);
+      // نضيف timestamp عشان نتجنب الكاش
+      const url = `${GOOGLE_SCRIPT_URL}?t=${Date.now()}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ تم تحميل الفيديوهات:', data);
+      setVideos(Array.isArray(data) ? data : []);
+      setMsg('');
     } catch (error) {
-      console.error('Error loading videos:', error);
-      setMsg('⚠️ خطأ في تحميل الفيديوهات');
+      console.error('❌ خطأ في تحميل الفيديوهات:', error);
+      setMsg('⚠️ خطأ في تحميل الفيديوهات - تأكد من اتصال الإنترنت');
+      setVideos([]);
+    } finally {
+      setIsLoadingVideos(false);
     }
   };
+
+  // تحميل الفيديوهات أول ما الصفحة تفتح
+  useEffect(() => {
+    if (isAuth) {
+      loadVideos();
+    }
+  }, [isAuth]);
 
   const handleLogin = () => {
     if (password === 'engmagdi2025') {
@@ -64,7 +82,7 @@ export default function ManagePage() {
     };
 
     try {
-      // ⚠️ مهم: نستخدم no-cors عشان نتجنب مشاكل CORS مع Google Apps Script
+      // نستخدم no-cors عشان نتجنب مشاكل CORS
       await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -72,9 +90,15 @@ export default function ManagePage() {
         body: JSON.stringify(newVideo)
       });
       
-      // نضيف الفيديو للقائمة فوراً عشان يظهر للمستخدم
+      // نضيف الفيديو للقائمة فوراً
       setVideos([newVideo, ...videos]);
       setMsg('✅ تم الحفظ في Google Sheets بنجاح!');
+      
+      // نعيد تحميل الفيديوهات من الـ Sheet بعد ثانية
+      setTimeout(() => {
+        loadVideos();
+      }, 1500);
+      
       setVideoId('');
       setTitle('');
       setDuration('');
@@ -109,7 +133,23 @@ export default function ManagePage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: 40, direction: 'rtl' }}>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
-        <h1>🎬 إدارة الفيديوهات</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h1>🎬 إدارة الفيديوهات</h1>
+          <button 
+            onClick={loadVideos}
+            style={{ 
+              padding: '8px 16px', 
+              background: '#64748b', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontSize: 14
+            }}
+          >
+            🔄 تحديث البيانات
+          </button>
+        </div>
         
         {/* Form الإضافة */}
         <form onSubmit={handleSave} style={{ background: 'white', padding: 24, borderRadius: 20, marginBottom: 24 }}>
@@ -171,13 +211,26 @@ export default function ManagePage() {
 
         {/* عرض الفيديوهات */}
         <div style={{ background: 'white', padding: 24, borderRadius: 20 }}>
-          <h3>الفيديوهات المحفوظة ({videos.length})</h3>
-          {videos.length === 0 ? (
-            <p style={{ color: '#64748b', textAlign: 'center', padding: 20 }}>مفيش فيديوهات لسه</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3>الفيديوهات المحفوظة ({videos.length})</h3>
+            {isLoadingVideos && <span style={{ color: '#64748b' }}>⏳ جاري التحميل...</span>}
+          </div>
+          
+          {videos.length === 0 && !isLoadingVideos ? (
+            <div style={{ 
+              padding: 40, 
+              background: '#f8fafc', 
+              borderRadius: 10, 
+              textAlign: 'center',
+              color: '#64748b'
+            }}>
+              <p style={{ fontSize: 18, marginBottom: 12 }}>📭 مفيش فيديوهات لسه</p>
+              <p style={{ fontSize: 14 }}>اضغط على "حفظ الفيديو" عشان تضيف أول فيديو</p>
+            </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {videos.map((v) => (
-                <div key={v.id} style={{ padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+              {videos.map((v, index) => (
+                <div key={v.id || index} style={{ padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
                   <div style={{ fontWeight: 700, marginBottom: 8 }}>{v.title}</div>
                   <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
                     {v.branch_id} | Video ID: {v.video_id} {v.duration && `| ${v.duration}`}
