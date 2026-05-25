@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxD4TKJxRdjuP9cTaFH18l4dQ5H2bmVCo3lu_JjPVAyEnZqorF9tX7hC-DoKh2fBG04/exec';
+// ✅ رابط Google Apps Script الجديد
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_hWdhEW3a2vs7YM5wJ6QJDIBYZFTVa1a7d4-YKDxCMawhFdndL6kEW-CjjPe-aNek/exec';
 
-export default function ManagePage() {
+export default function ControlPage() {
   const [isAuth, setIsAuth] = useState(false);
   const [password, setPassword] = useState('');
   const [msg, setMsg] = useState('');
@@ -42,7 +43,7 @@ export default function ManagePage() {
       setMsg('');
     } catch (error) {
       console.error('❌ خطأ في تحميل الفيديوهات:', error);
-      setMsg('⚠️ خطأ في تحميل الفيديوهات - تأكد من اتصال الإنترنت');
+      setMsg('⚠️ خطأ في تحميل الفيديوهات');
       setVideos([]);
     } finally {
       setIsLoadingVideos(false);
@@ -91,7 +92,7 @@ export default function ManagePage() {
       
       setTimeout(() => {
         loadVideos();
-      }, 1500);
+      }, 2000);
       
       setVideoId('');
       setTitle('');
