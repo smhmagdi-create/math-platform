@@ -41,19 +41,24 @@ export default function AdminPage() {
     const rowData = { branch_id: branchId, video_id: videoId, title, duration };
 
     try {
+      // ✅ التعديل السحري هنا: إحنا بنلف البيانات جوه مصفوفة [ ] عشان الـ Sheet يقبلها كـ Row
       const res = await fetch('https://sheetdb.io/api/v1/w28940080r92q/videos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: rowData })
+        body: JSON.stringify({ data: [rowData] }) 
       });
 
       if (res.ok) {
         setMsg({ type: 'success', text: '✅ تم حفظ الفيديو بنجاح!' });
         setVideoId(''); setTitle(''); setDuration('');
       } else {
-        setMsg({ type: 'error', text: '❌ حدث خطأ أثناء الحفظ' });
+        // بنطبع الرد عشان نعرف الخطأ لو في
+        const errorText = await res.text();
+        console.error('Server Error:', errorText);
+        setMsg({ type: 'error', text: '❌ حدث خطأ في السيرفر' });
       }
-    } catch {
+    } catch (error) {
+      console.error('Connection Error:', error);
       setMsg({ type: 'error', text: '❌ فشل الاتصال بالخادم' });
     } finally {
       setLoading(false);
